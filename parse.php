@@ -399,7 +399,7 @@ function parse_line(string $line): void {
 	}
 
 	// Kontrola argumentov
-	for ($i = 1; $i < count($inst); $i++) {
+	for ($i = 1; $i <= $inst_argc; $i++) {
 		$arg = $inst[$i];
 		$arg_type = $operation["argt"][$i - 1];
 
