@@ -2064,7 +2064,7 @@
 ./tests/parser/GENERATED/not/simple217 : OK
 ./tests/parser/GENERATED/not/simple228 : OK
 ./tests/parser/GENERATED/not/simple23 : OK
-./tests/parser/GENERATED/not/simple232 : FAIL
+./tests/parser/GENERATED/not/simple232 : OK
 ./tests/parser/GENERATED/not/simple25 : OK
 ./tests/parser/GENERATED/not/simple29 : OK
 ./tests/parser/GENERATED/not/simple211 : OK
@@ -2084,13 +2084,13 @@
 ./tests/parser/GENERATED/not/simple229 : OK
 ./tests/parser/GENERATED/not/simple212 : OK
 ./tests/parser/GENERATED/not/simple225 : OK
-./tests/parser/GENERATED/not/simple233 : FAIL
+./tests/parser/GENERATED/not/simple233 : OK
 ./tests/parser/GENERATED/not/simple227 : OK
 ./tests/parser/GENERATED/not/simple26 : OK
 ./tests/parser/GENERATED/not/simple27 : OK
-./tests/parser/GENERATED/not/simple230 : FAIL
-./tests/parser/GENERATED/not/simple235 : FAIL
-./tests/parser/GENERATED/not/simple231 : FAIL
+./tests/parser/GENERATED/not/simple230 : OK
+./tests/parser/GENERATED/not/simple235 : OK
+./tests/parser/GENERATED/not/simple231 : OK
 ./tests/parser/GENERATED/not/simple11 : OK
 ./tests/parser/GENERATED/not/simple216 : OK
 ./tests/parser/GENERATED/not/simple21 : OK
@@ -4322,11 +4322,5 @@
 ==============================
 
 Total tests: 4320
-Successful tests: 4315
-Failed tests: 5
-Failed tests:
-  ./tests/parser/GENERATED/not/simple232
-  ./tests/parser/GENERATED/not/simple233
-  ./tests/parser/GENERATED/not/simple230
-  ./tests/parser/GENERATED/not/simple235
-  ./tests/parser/GENERATED/not/simple231
+Successful tests: 4320
+Failed tests: 0

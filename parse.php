@@ -185,7 +185,6 @@ define("INSTR", array(
 		"argt"	=> array(
 			OPERAND["var"],
 			OPERAND["symb"],
-			OPERAND["symb"]
 		)
 	),
 	"INT2CHAR" => array(
