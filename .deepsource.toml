@@ -1,0 +1,14 @@
+version = 1
+
+test_patterns = ["tests/**"]
+
+exclude_patterns = [
+  "is_it_ok.sh",
+  "**.in",
+  "**.out",
+  "**.src",
+  "**.IPPcode23"
+]
+
+[[analyzers]]
+name = "php"
