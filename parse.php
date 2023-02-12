@@ -526,7 +526,7 @@ function is_valid_string(string $str): bool {
 				. $str[$i + 2]
 				. $str[$i + 3];
 
-			if (!preg_match_all("/(0[0-3][0-2]|092|035)/", $seq)) return false;
+			if (!preg_match_all("/\d{3}/", $seq)) return false;
 			$i += 3;
 		}
 	}

@@ -87,7 +87,7 @@
 ./tests/parser/string/long : OK
 ./tests/parser/string/utf : OK
 ./tests/parser/string/comment : OK
-./tests/parser/string/escape3 : FAIL
+./tests/parser/string/escape3 : OK
 ./tests/parser/string/escape2 : OK
 ./tests/parser/pops/bool : OK
 ./tests/parser/pops/nil : OK
@@ -4322,10 +4322,9 @@
 ==============================
 
 Total tests: 4320
-Successful tests: 4313
-Failed tests: 7
+Successful tests: 4314
+Failed tests: 6
 Failed tests:
-  ./tests/parser/string/escape3
   ./tests/parser/defvar/number2
   ./tests/parser/GENERATED/not/simple232
   ./tests/parser/GENERATED/not/simple233
