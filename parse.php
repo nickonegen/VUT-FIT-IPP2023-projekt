@@ -34,6 +34,7 @@ $opts = getopt("", array(
 $GINFO = array(
 	"header"	=> false,
 	"stats"	=> false,
+	"lines"	=> 0,
 	"i_lines"	=> -1,
 	"c_lines"	=> 0,
 );
@@ -310,6 +311,8 @@ if (isset($opts["help"])) {
 
 /* Spracovanie vstupu */
 for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
+	$GINFO["lines"] = $lineno + 1;
+
 	// Celý riadok je komentár
 	if (preg_match('/^\s*#.*/', $line)) {
 		$GINFO["c_lines"]++;
@@ -331,7 +334,7 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 	if ($GINFO["i_lines"] < 0) {
 		if (preg_match('/^\.IPPcode23$/', $line)) {
 			$GINFO["header"] = true;
-			$GINFO["i_lines"]++;
+			$GINFO["i_lines"] = 0;
 			continue;
 		} else {
 			error_log("ERR! code ENOHEAD\n"
@@ -343,13 +346,46 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 
 	// Spracovanie riadku
 	$GINFO["i_lines"]++;
-	echo ($GINFO["i_lines"] . ": "); // DEBUG
 	parse_line($line);
+
+	// DEBUG - spracovať iba jeden riadok
+	// if ($GINFO["i_lines"] > 0) break;
 }
 
 function parse_line($line) {
-	// DEBUG - výpis riadku
-	echo ($line . "\n");
+	global $GINFO;
+
+	// Rozdelenie riadku na inštrukciu a argumenty
+	$inst = explode(" ", $line);
+	if (!isset($inst[0])) {
+		error_log("ERR! code EOPCODE\n"
+			. "ERR! line " . $GINFO["lines"] . "\n"
+			. "ERR! Missing operation code");
+		exit(RETCODE["EOPCODE"]);
+	}
+	$inst[0] = strtoupper($inst[0]);
+
+	// Kontrola, či je inštrukcia vo výčte
+	if (!isset(INSTR[$inst[0]])) {
+		error_log("ERR! code EOPCODE\n"
+			. "ERR! line " . $GINFO["lines"] . "\n"
+			. "ERR! Unknown instruction $inst[0]");
+		exit(RETCODE["EOPCODE"]);
+	}
+	$operation = INSTR[$inst[0]];
+
+	// Kontrola počtu argumentov
+	$inst_argc = count($inst) - 1;
+	if ($inst_argc != count($operation["argt"])) {
+		error_log("ERR! code EANLYS\n"
+			. "ERR! line " . $GINFO["lines"] . "\n"
+			. "ERR! $inst[0] expects "
+			. count($operation["argt"])
+			. " arguments, got $inst_argc");
+		exit(RETCODE["EANLYS"]);
+	}
+
+	echo implode(' ', $inst) . "\n"; // DEBUG
 	return;
 }
 
