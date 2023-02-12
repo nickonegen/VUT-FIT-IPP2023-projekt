@@ -15,6 +15,8 @@ Hodnotenie: ?? / 8<br>（?）
 ### TODO-List
 
 * [X] ⏰ 2023-02-08 **Zadanie**
+* [ ] ⏰ 2023-02-13 **Registrácia na pokusné odovzdanie**
+* [ ] ⏰ 2023-02-14 **Registrácia na projekt**
 * [ ] ⏰ 2023-02-14 **Fixácia zadania**
 * [ ] ⏰ 2023-03-06 **Pokusné odovzdanie**
 * [ ] ⏰ 2023-03-13 **Deadline**
@@ -30,6 +32,8 @@ Hodnotenie: ?? / 8<br>（?）
 Hodnotenie: ?? / 12<br>（?）
 
 * [X] ⏰ 2023-02-08 **Zadanie**
+* [ ] ⏰ 2023-02-13 **Registrácia na pokusné odovzdanie**
 * [ ] ⏰ 2023-02-14 **Fixácia zadania**
+* [ ] ⏰ 2023-02-20 **Registrácia na projekt**
 * [ ] ⏰ 2023-04-11 **Pokusné odovzdanie**
 * [ ] ⏰ 2023-04-18 **Deadline**
