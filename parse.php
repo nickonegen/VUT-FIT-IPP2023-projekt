@@ -32,13 +32,21 @@ $opts = getopt("", array(
 
 /** @var \ArrayObject GINFO Objekt pre kontroly */
 $GINFO = array(
-	"header"	=> false,
-	"stats"	=> false,
-	"color"	=> true, // Farebný výstup
-	"lines"	=> 0,
-	"i_lines"	=> -1,
-	"c_lines"	=> 0,
+	"header"	=> false,	// Prítomnosť hlavičky
+	"stats"	=> false,	// --stats (STATP neimplementované)
+	"color"	=> true,	// Farebný výstup
+	"lines"	=> 0,	// Počet riadkov vstupu
+	"i_lines"	=> 0,	// Počet riadkov s inštrukciami
+	"c_lines"	=> 0,	// Počet riadkov s komentárami
 );
+
+/** @var \ArrayObject DTYPE Výčet dátových typov */
+define("DTYPE", array(
+	"int"	=> 0,
+	"bool"	=> 1,
+	"string"	=> 2,
+	"nil"	=> 3,
+));
 
 /** @var \ArrayObject OPERAND Výčet operandov */
 define("OPERAND", array(
@@ -315,13 +323,13 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 	$GINFO["lines"] = $lineno + 1;
 
 	// Celý riadok je komentár
-	if (preg_match('/^\s*#.*/', $line)) {
+	if (preg_match_all('/^\s*#.*/', $line)) {
 		$GINFO["c_lines"]++;
 		continue;
 	}
 
 	// Odstránenie komentárov
-	if (preg_match('/^.*#/', $line)) $GINFO["c_lines"]++;
+	if (preg_match_all('/^.*#/', $line)) $GINFO["c_lines"]++;
 	$line = preg_replace('/#.*$/', '', $line);
 
 	// Odstránenie nadbytočných bielych znakov
@@ -329,13 +337,12 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 	$line = trim($line);
 
 	// Prázdny riadok
-	if (preg_match('/^\s*$/', $line)) continue;
+	if (preg_match_all('/^\s*$/', $line)) continue;
 
 	// Prvý neprázdny riadok musí byť hlavička
-	if ($GINFO["i_lines"] < 0) {
-		if (preg_match('/^\.IPPcode23$/', $line)) {
+	if (!$GINFO["header"]) {
+		if (preg_match_all('/^\.IPPcode23$/', $line)) {
 			$GINFO["header"] = true;
-			$GINFO["i_lines"] = 0;
 			continue;
 		} else {
 			throw_err(
@@ -350,7 +357,6 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 	$GINFO["i_lines"]++;
 	parse_line($line);
 
-	// DEBUG - spracovať iba jeden riadok
 	// if ($GINFO["i_lines"] > 0) break;
 }
 
@@ -449,28 +455,92 @@ function parse_line(string $line): void {
 		}
 	}
 
-	echo implode(' ', $inst) . "\n"; // DEBUG
+	// echo implode(' ', $inst) . "\n"; // DEBUG
 	return;
 }
 
 function is_valid_var(string $op): bool {
-	// TODO
+	$op_split = explode("@", $op, 2);
+
+	// Kontrola formátu: FRAME@ID
+	if (count($op_split) != 2) return false;
+
+	// Kontrola FRAME = GF|LF|TF
+	if (!preg_match_all('/^(GF|LF|TF)$/', $op_split[0])) return false;
+
+	// Kontrola ID
+	if (!is_valid_id($op_split[1])) return false;
+
 	return true;
 }
 
 function is_valid_const(string $op): bool {
-	// TODO
+	$op_split = explode("@", $op, 2);
+
+	// Kontrola formátu: TYPE@VALUE
+	if (count($op_split) != 2) return false;
+
+	// Kontrola TYPE
+	if (!is_valid_type($op_split[0])) return false;
+	$op_type = DTYPE[$op_split[0]];
+
+	// Kontrola VALUE
+	switch ($op_type) {
+		case DTYPE["int"]:
+			if (!preg_match_all('/^-?[0-9]+$/', $op_split[1])) return false;
+			break;
+		case DTYPE["bool"]:
+			if (!preg_match_all('/^(true|false)$/', $op_split[1])) return false;
+			break;
+		case DTYPE["string"]:
+			if (!is_valid_string($op_split[1])) return false;
+			break;
+		case DTYPE["nil"]:
+			if ($op_split[1] != "nil") return false;
+			break;
+	}
+
+	return true;
+}
+
+function is_valid_string(string $str): bool {
+	// Nemôže obsahovať biely znak
+	if (preg_match_all('/\s/', $str)) return false;
+
+	// Nemôže obsahovať #
+	if (preg_match_all('/#/', $str)) return false;
+
+	// Kontrola escape sekvencií
+	if (!preg_match_all("/\\\\/", $str)) return true;
+	$str_len = strlen($str);
+	for ($i = 0; $i < $str_len; $i++) {
+		if ($str[$i] == "\\") {
+			if (
+				!isset($str[$i + 1])
+				|| !isset($str[$i + 2])
+				|| !isset($str[$i + 3])
+			)
+				return false;
+
+			$seq = $str[$i + 1]
+				. $str[$i + 2]
+				. $str[$i + 3];
+
+			if (!preg_match_all("/(0[0-3][0-2]|092|035)/", $seq)) return false;
+			$i += 3;
+		}
+	}
+
 	return true;
 }
 
 function is_valid_id(string $op): bool {
-	// TODO
-	return true;
+	return (bool)preg_match_all('/^[a-zA-Z0-9_\-\$&%\*\!\?]+$/', $op);
 }
 
 function is_valid_type(string $op): bool {
-	// TODO
-	return true;
+	if (isset(DTYPE[$op])) return true;
+	return false;
 }
 
 function throw_err(string $ecode, int $ln, string $msg): void {
