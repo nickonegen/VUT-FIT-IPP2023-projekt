@@ -34,6 +34,7 @@ $opts = getopt("", array(
 $GINFO = array(
 	"header"	=> false,
 	"stats"	=> false,
+	"color"	=> true, // Farebný výstup
 	"lines"	=> 0,
 	"i_lines"	=> -1,
 	"c_lines"	=> 0,
@@ -337,10 +338,11 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 			$GINFO["i_lines"] = 0;
 			continue;
 		} else {
-			error_log("ERR! code ENOHEAD\n"
-				. "ERR! line $lineno\n"
-				. "ERR! Missing .IPPcode23 header");
-			exit(RETCODE["ENOHEAD"]);
+			throw_err(
+				"ENOHEAD",
+				$lineno,
+				"Missing .IPPcode23 header"
+			);
 		}
 	}
 
@@ -352,41 +354,135 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 	// if ($GINFO["i_lines"] > 0) break;
 }
 
-function parse_line($line) {
+if (!$GINFO["header"]) {
+	throw_err(
+		"ENOHEAD",
+		$lineno,
+		"Missing .IPPcode23 header (empty file)"
+	);
+}
+
+function parse_line(string $line): void {
 	global $GINFO;
 
 	// Rozdelenie riadku na inštrukciu a argumenty
 	$inst = explode(" ", $line);
 	if (!isset($inst[0])) {
-		error_log("ERR! code EOPCODE\n"
-			. "ERR! line " . $GINFO["lines"] . "\n"
-			. "ERR! Missing operation code");
-		exit(RETCODE["EOPCODE"]);
+		throw_err(
+			"EOPCODE",
+			$GINFO["lines"],
+			"Missing operation code"
+		);
 	}
 	$inst[0] = strtoupper($inst[0]);
 
 	// Kontrola, či je inštrukcia vo výčte
 	if (!isset(INSTR[$inst[0]])) {
-		error_log("ERR! code EOPCODE\n"
-			. "ERR! line " . $GINFO["lines"] . "\n"
-			. "ERR! Unknown instruction $inst[0]");
-		exit(RETCODE["EOPCODE"]);
+		throw_err(
+			"EOPCODE",
+			$GINFO["lines"],
+			"Unknown instruction $inst[0]"
+		);
 	}
 	$operation = INSTR[$inst[0]];
 
 	// Kontrola počtu argumentov
 	$inst_argc = count($inst) - 1;
 	if ($inst_argc != count($operation["argt"])) {
-		error_log("ERR! code EANLYS\n"
-			. "ERR! line " . $GINFO["lines"] . "\n"
-			. "ERR! $inst[0] expects "
-			. count($operation["argt"])
-			. " arguments, got $inst_argc");
-		exit(RETCODE["EANLYS"]);
+		throw_err(
+			"EANLYS",
+			$GINFO["lines"],
+			"$inst[0] expects "
+				. count($operation["argt"])
+				. " arguments, got $inst_argc"
+		);
+	}
+
+	// Kontrola argumentov
+	for ($i = 1; $i < count($inst); $i++) {
+		$arg = $inst[$i];
+		$arg_type = $operation["argt"][$i - 1];
+
+		switch ($arg_type) {
+			case OPERAND["var"]:
+				if (!is_valid_var($arg)) {
+					throw_err(
+						"EANLYS",
+						$GINFO["lines"],
+						"Invalid variable $arg"
+					);
+				}
+				break;
+			case OPERAND["symb"]:
+				if (!is_valid_var($arg) && !is_valid_const($arg)) {
+					throw_err(
+						"EANLYS",
+						$GINFO["lines"],
+						"Invalid symbol $arg"
+					);
+				}
+				break;
+			case OPERAND["label"]:
+				if (!is_valid_id($arg)) {
+					throw_err(
+						"EANLYS",
+						$GINFO["lines"],
+						"Invalid label $arg"
+					);
+				}
+				break;
+			case OPERAND["type"]:
+				if (!is_valid_type($arg)) {
+					throw_err(
+						"EANLYS",
+						$GINFO["lines"],
+						"Invalid type $arg"
+					);
+				}
+				break;
+			default:
+				throw_err(
+					"EANLYS",
+					$GINFO["lines"],
+					"Couldn't validate type of $arg"
+				);
+		}
 	}
 
 	echo implode(' ', $inst) . "\n"; // DEBUG
 	return;
 }
 
-exit(RETCODE["OK"]);
+function is_valid_var(string $op): bool {
+	// TODO
+	return true;
+}
+
+function is_valid_const(string $op): bool {
+	// TODO
+	return true;
+}
+
+function is_valid_id(string $op): bool {
+	// TODO
+	return true;
+}
+
+function is_valid_type(string $op): bool {
+	// TODO
+	return true;
+}
+
+function throw_err(string $ecode, int $ln, string $msg): void {
+	global $GINFO;
+
+	$ERR = $GINFO["color"] ? "\033[31;49;1mERR!\033[0m" : "ERR!";
+	$CODE = $GINFO["color"] ? "\033[35;49mcode\033[0m" : "code";
+	$LINE = $GINFO["color"] ? "\033[35;49mline\033[0m" : "line";
+	$err_string = "$ERR $CODE $ecode\n"
+		. "$ERR $LINE $ln\n"
+		. "$ERR $msg";
+
+	error_log($err_string);
+	exit(RETCODE[$ecode]);
+}
