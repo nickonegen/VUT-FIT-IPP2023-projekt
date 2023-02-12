@@ -535,7 +535,7 @@ function is_valid_string(string $str): bool {
 }
 
 function is_valid_id(string $op): bool {
-	return (bool)preg_match_all('/^[a-zA-Z0-9_\-\$&%\*\!\?]+$/', $op);
+	return (bool)preg_match_all('/^[$&%!a-zA-Z_\-\*\?][$&%!\w\-\*\?]*$/', $op);
 }
 
 function is_valid_type(string $op): bool {

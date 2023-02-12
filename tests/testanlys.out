@@ -102,7 +102,7 @@
 ./tests/parser/defvar/specialCharsOk3 : OK
 ./tests/parser/defvar/specialCharsOk4 : OK
 ./tests/parser/defvar/specialCharsOk8 : OK
-./tests/parser/defvar/number2 : FAIL
+./tests/parser/defvar/number2 : OK
 ./tests/parser/defvar/specialCharsOk7 : OK
 ./tests/parser/defvar/specialCharsOk2 : OK
 ./tests/parser/defvar/TF : OK
@@ -4322,10 +4322,9 @@
 ==============================
 
 Total tests: 4320
-Successful tests: 4314
-Failed tests: 6
+Successful tests: 4315
+Failed tests: 5
 Failed tests:
-  ./tests/parser/defvar/number2
   ./tests/parser/GENERATED/not/simple232
   ./tests/parser/GENERATED/not/simple233
   ./tests/parser/GENERATED/not/simple230
