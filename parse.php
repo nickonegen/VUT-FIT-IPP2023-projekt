@@ -487,7 +487,7 @@ function is_valid_const(string $op): bool {
 	// Kontrola VALUE
 	switch ($op_type) {
 		case DTYPE["int"]:
-			if (!preg_match_all('/^-?[0-9]+$/', $op_split[1])) return false;
+			if (!preg_match_all('/^[+-]?[0-9]+$/', $op_split[1])) return false;
 			break;
 		case DTYPE["bool"]:
 			if (!preg_match_all('/^(true|false)$/', $op_split[1])) return false;

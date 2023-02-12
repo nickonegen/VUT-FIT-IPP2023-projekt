@@ -53,7 +53,7 @@
 ./tests/parser/return/ok : OK
 ./tests/parser/return/operands : OK
 ./tests/parser/int/no@ : OK
-./tests/parser/int/ok3 : FAIL
+./tests/parser/int/ok3 : OK
 ./tests/parser/int/ok1 : OK
 ./tests/parser/int/longInt : OK
 ./tests/parser/int/empty : OK
@@ -4322,10 +4322,9 @@
 ==============================
 
 Total tests: 4320
-Successful tests: 4312
-Failed tests: 8
+Successful tests: 4313
+Failed tests: 7
 Failed tests:
-  ./tests/parser/int/ok3
   ./tests/parser/string/escape3
   ./tests/parser/defvar/number2
   ./tests/parser/GENERATED/not/simple232
