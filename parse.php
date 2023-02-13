@@ -322,128 +322,108 @@ for ($lineno = 0; $line = fgets(STDIN); $lineno++) {
 	$GINFO["lines"] = $lineno + 1;
 
 	// Celý riadok je komentár
-	if (preg_match_all('/^\s*#.*/', $line)) {
+	if (is_comment($line)) {
 		$GINFO["c_lines"]++;
 		continue;
 	}
 
 	// Odstránenie komentárov
-	if (preg_match_all('/^.*#/', $line)) $GINFO["c_lines"]++;
-	$line = preg_replace('/#.*$/', '', $line);
+	if (has_comment($line)) {
+		$GINFO["c_lines"]++;
+		$line = remove_comments($line);
+	}
 
 	// Odstránenie nadbytočných bielych znakov
-	$line = preg_replace('/\s+/', ' ', $line);
-	$line = trim($line);
+	$line = trim(preg_replace('/\s+/', ' ', $line));
 
 	// Prázdny riadok
-	if (preg_match_all('/^\s*$/', $line)) continue;
+	if (is_empty_line($line)) continue;
 
 	// Prvý neprázdny riadok musí byť hlavička
 	if (!$GINFO["header"]) {
-		if (preg_match_all('/^\.IPPcode23$/', $line)) {
-			$GINFO["header"] = true;
-			continue;
-		} else {
-			throw_err(
-				"ENOHEAD",
-				$lineno,
-				"Missing .IPPcode23 header"
-			);
-		}
+		$GINFO["header"] = is_header($line) ? true : throw_err(
+			"ENOHEAD",
+			$lineno,
+			"Missing .IPPcode23 header");
+		continue;
 	}
 
 	// Spracovanie riadku
 	$GINFO["i_lines"]++;
 	parse_line($line);
-
-	// if ($GINFO["i_lines"] > 0) break;
 }
 
-if (!$GINFO["header"]) {
-	throw_err(
-		"ENOHEAD",
-		$lineno,
-		"Missing .IPPcode23 header (empty file)"
-	);
-}
+$GINFO["header"] || throw_err("ENOHEAD", $lineno, "Missing .IPPcode23 header (empty file)");
 
 function parse_line(string $line): void {
 	global $GINFO;
 
 	// Rozdelenie riadku na inštrukciu a argumenty
 	$inst = explode(" ", $line);
-	if (!isset($inst[0])) {
+	$inst[0] = !isset($inst[0]) ? 
 		throw_err(
 			"EOPCODE",
 			$GINFO["lines"],
 			"Missing operation code"
-		);
-	}
-	$inst[0] = strtoupper($inst[0]);
+		) :
+		strtoupper($inst[0]);
 
 	// Kontrola, či je inštrukcia vo výčte
-	if (!isset(INSTR[$inst[0]])) {
+	$inst_code = INSTR[$inst[0]] ??
 		throw_err(
 			"EOPCODE",
 			$GINFO["lines"],
 			"Unknown instruction $inst[0]"
 		);
-	}
-	$operation = INSTR[$inst[0]];
+	$inst_argc = count($inst) - 1;
 
 	// Kontrola počtu argumentov
-	$inst_argc = count($inst) - 1;
-	if ($inst_argc != count($operation["argt"])) {
+	$inst_argc === count($inst_code["argt"]) ||
 		throw_err(
 			"EANLYS",
 			$GINFO["lines"],
 			"$inst[0] expects "
-				. count($operation["argt"])
+				. count($inst_code["argt"])
 				. " arguments, got $inst_argc"
 		);
-	}
 
 	// Kontrola argumentov
 	for ($i = 1; $i <= $inst_argc; $i++) {
 		$arg = $inst[$i];
-		$arg_type = $operation["argt"][$i - 1];
+		$arg_type = $inst_code["argt"][$i - 1];
 
 		switch ($arg_type) {
 			case OPERAND["var"]:
-				if (!is_valid_var($arg)) {
+				is_valid_var($arg) ||
 					throw_err(
 						"EANLYS",
 						$GINFO["lines"],
 						"Invalid variable $arg"
 					);
-				}
 				break;
 			case OPERAND["symb"]:
-				if (!is_valid_var($arg) && !is_valid_const($arg)) {
+				is_valid_var($arg) || is_valid_const($arg) ||
 					throw_err(
 						"EANLYS",
 						$GINFO["lines"],
 						"Invalid symbol $arg"
 					);
-				}
 				break;
 			case OPERAND["label"]:
-				if (!is_valid_id($arg)) {
+				is_valid_id($arg) ||
 					throw_err(
 						"EANLYS",
 						$GINFO["lines"],
 						"Invalid label $arg"
 					);
-				}
 				break;
 			case OPERAND["type"]:
-				if (!is_valid_type($arg)) {
+				is_valid_type($arg) ||
 					throw_err(
 						"EANLYS",
 						$GINFO["lines"],
 						"Invalid type $arg"
 					);
-				}
 				break;
 			default:
 				throw_err(
@@ -453,9 +433,6 @@ function parse_line(string $line): void {
 				);
 		}
 	}
-
-	// echo implode(' ', $inst) . "\n"; // DEBUG
-	return;
 }
 
 function is_valid_var(string $op): bool {
@@ -465,7 +442,7 @@ function is_valid_var(string $op): bool {
 	if (count($op_split) != 2) return false;
 
 	// Kontrola FRAME = GF|LF|TF
-	if (!preg_match_all('/^(GF|LF|TF)$/', $op_split[0])) return false;
+	if (!preg_match('/^(GF|LF|TF)$/', $op_split[0])) return false;
 
 	// Kontrola ID
 	if (!is_valid_id($op_split[1])) return false;
@@ -486,51 +463,24 @@ function is_valid_const(string $op): bool {
 	// Kontrola VALUE
 	switch ($op_type) {
 		case DTYPE["int"]:
-			if (!preg_match_all('/^[+-]?[0-9]+$/', $op_split[1])) return false;
+			return (bool)preg_match_all('/^[+-]?[0-9]+$/', $op_split[1]);
 			break;
 		case DTYPE["bool"]:
-			if (!preg_match_all('/^(true|false)$/', $op_split[1])) return false;
+			return (bool)preg_match_all('/^(true|false)$/', $op_split[1]);
 			break;
 		case DTYPE["string"]:
-			if (!is_valid_string($op_split[1])) return false;
+			return is_valid_string($op_split[1]);
 			break;
 		case DTYPE["nil"]:
-			if ($op_split[1] != "nil") return false;
+			return $op_split[1] == "nil";
 			break;
+		default:
+			return false;
 	}
-
-	return true;
 }
 
 function is_valid_string(string $str): bool {
-	// Nemôže obsahovať biely znak
-	if (preg_match_all('/\s/', $str)) return false;
-
-	// Nemôže obsahovať #
-	if (preg_match_all('/#/', $str)) return false;
-
-	// Kontrola escape sekvencií
-	if (!preg_match_all("/\\\\/", $str)) return true;
-	$str_len = strlen($str);
-	for ($i = 0; $i < $str_len; $i++) {
-		if ($str[$i] == "\\") {
-			if (
-				!isset($str[$i + 1])
-				|| !isset($str[$i + 2])
-				|| !isset($str[$i + 3])
-			)
-				return false;
-
-			$seq = $str[$i + 1]
-				. $str[$i + 2]
-				. $str[$i + 3];
-
-			if (!preg_match_all("/\d{3}/", $seq)) return false;
-			$i += 3;
-		}
-	}
-
-	return true;
+	return (bool)!preg_match_all('/[\s#]|(\\\\(?!\d{3}))/', $str);
 }
 
 function is_valid_id(string $op): bool {
@@ -538,16 +488,36 @@ function is_valid_id(string $op): bool {
 }
 
 function is_valid_type(string $op): bool {
-	if (isset(DTYPE[$op])) return true;
-	return false;
+	return array_key_exists($op, DTYPE);
+}
+
+function is_comment(string $line): bool {
+	return (bool)preg_match_all('/^\s*#.*/', $line);
+}
+
+function has_comment(string $line): bool {
+	return (bool)preg_match_all('/^.*#/', $line);
+}
+
+function remove_comments(string $line): string {
+	return substr($line, 0, strpos($line, "#"));
+}
+
+function is_empty_line(string $line): bool {
+	return (bool)preg_match_all('/^\s*$/', $line);
+}
+
+function is_header(string $line): bool {
+	return (bool)preg_match_all('/^\.IPPcode23$/', $line);
 }
 
 function throw_err(string $ecode, int $ln, string $msg): void {
 	global $GINFO;
 
-	$ERR = $GINFO["color"] ? "\033[31;49;1mERR!\033[0m" : "ERR!";
-	$CODE = $GINFO["color"] ? "\033[35;49mcode\033[0m" : "code";
-	$LINE = $GINFO["color"] ? "\033[35;49mline\033[0m" : "line";
+	$color = $GINFO["color"];
+	$ERR = $color ? "\033[31;49;1mERR!\033[0m" : "ERR!";
+	$CODE = $color ? "\033[35;49mcode\033[0m" : "code";
+	$LINE = $color ? "\033[35;49mline\033[0m" : "line";
 	$err_string = "$ERR $CODE $ecode\n"
 		. "$ERR $LINE $ln\n"
 		. "$ERR $msg";
