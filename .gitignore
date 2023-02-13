@@ -1,2 +1,12 @@
+# JExamXML
+jexamxml.jar
+options
+
+# Testing scripts
+test.php
+testanlys.sh
+testanlys.out
+
+# Private stuff
 **.zip
 **-private**

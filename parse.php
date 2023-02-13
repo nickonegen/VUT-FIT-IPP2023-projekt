@@ -221,6 +221,11 @@ if (isset($opts['help'])) {
 	exit(RETCODE['OK']);
 }
 
+/* Vytvorenie XML reprezentácie kódu */
+$XML = new SimpleXMLElement(
+	'<?xml version="1.0" encoding="UTF-8"?><program language="IPPcode23"></program>',
+);
+
 /* Spracovanie vstupu */
 for ($lineno = 0; ($line = fgets(STDIN)); $lineno++) {
 	$GINFO['lines'] = $lineno + 1;
@@ -261,8 +266,16 @@ for ($lineno = 0; ($line = fgets(STDIN)); $lineno++) {
 $GINFO['header'] ||
 	throw_err('ENOHEAD', $lineno, 'Missing .IPPcode23 header (empty file)');
 
+echo $XML->asXML();
+exit(RETCODE['OK']);
+
 function parse_line(string $line): void {
 	global $GINFO;
+	global $XML;
+
+	// XML element inštrukcie
+	$inst_xml = $XML->addChild('instruction');
+	$inst_xml->addAttribute('order', $GINFO['i_lines']);
 
 	// Rozdelenie riadku na inštrukciu a argumenty
 	$inst = explode(' ', $line);
@@ -274,9 +287,10 @@ function parse_line(string $line): void {
 	$inst_code =
 		INSTR[$inst[0]] ??
 		throw_err('EOPCODE', $GINFO['lines'], "Unknown instruction $inst[0]");
-	$inst_argc = count($inst) - 1;
+	$inst_xml->addAttribute('opcode', $inst[0]);
 
 	// Kontrola počtu argumentov
+	$inst_argc = count($inst) - 1;
 	$inst_argc === count($inst_code['argt']) ||
 		throw_err(
 			'EANLYS',
@@ -290,10 +304,11 @@ function parse_line(string $line): void {
 	for ($i = 1; $i <= $inst_argc; $i++) {
 		$arg = $inst[$i];
 		$arg_type = $inst_code['argt'][$i - 1];
+		$arg_xml = $inst_xml->addChild('arg' . $i);
 
 		switch ($arg_type) {
 			case OPERAND['var']:
-				is_valid_var($arg) ||
+				parse_var($arg, $arg_xml) ||
 					throw_err(
 						'EANLYS',
 						$GINFO['lines'],
@@ -301,8 +316,8 @@ function parse_line(string $line): void {
 					);
 				break;
 			case OPERAND['symb']:
-				is_valid_var($arg) ||
-					is_valid_const($arg) ||
+				parse_var($arg, $arg_xml) ||
+					parse_const($arg, $arg_xml) ||
 					throw_err(
 						'EANLYS',
 						$GINFO['lines'],
@@ -316,6 +331,8 @@ function parse_line(string $line): void {
 						$GINFO['lines'],
 						"Invalid label $arg",
 					);
+				$arg_xml->addAttribute('type', 'label');
+				$arg_xml[0] = $arg;
 				break;
 			case OPERAND['type']:
 				is_valid_type($arg) ||
@@ -324,6 +341,8 @@ function parse_line(string $line): void {
 						$GINFO['lines'],
 						"Invalid type $arg",
 					);
+				$arg_xml->addAttribute('type', 'type');
+				$arg_xml[0] = $arg;
 				break;
 			default:
 				throw_err(
@@ -335,7 +354,7 @@ function parse_line(string $line): void {
 	}
 }
 
-function is_valid_var(string $op): bool {
+function parse_var(string $op, SimpleXMLElement $arg_xml): bool {
 	$op_split = explode('@', $op, 2);
 
 	// Kontrola formátu: FRAME@ID
@@ -353,10 +372,13 @@ function is_valid_var(string $op): bool {
 		return false;
 	}
 
+	// Validná premenná -> pridanie do XML
+	$arg_xml->addAttribute('type', 'var');
+	$arg_xml[0] = $op;
 	return true;
 }
 
-function is_valid_const(string $op): bool {
+function parse_const(string $op, SimpleXMLElement $arg_xml): bool {
 	$op_split = explode('@', $op, 2);
 
 	// Kontrola formátu: TYPE@VALUE
@@ -373,20 +395,33 @@ function is_valid_const(string $op): bool {
 	// Kontrola VALUE
 	switch ($op_type) {
 		case DTYPE['int']:
-			return (bool) preg_match_all('/^[+-]?[0-9]+$/', $op_split[1]);
+			if (!preg_match_all('/^[+-]?[0-9]+$/', $op_split[1])) {
+				return false;
+			}
 			break;
 		case DTYPE['bool']:
-			return (bool) preg_match_all('/^(true|false)$/', $op_split[1]);
+			if (!preg_match_all('/^(true|false)$/', $op_split[1])) {
+				return false;
+			}
 			break;
 		case DTYPE['string']:
-			return is_valid_string($op_split[1]);
+			if (!is_valid_string($op_split[1])) {
+				return false;
+			}
 			break;
 		case DTYPE['nil']:
-			return $op_split[1] == 'nil';
+			if ($op_split[1] != 'nil') {
+				return false;
+			}
 			break;
 		default:
 			return false;
 	}
+
+	// Validná konštanta -> pridanie do XML
+	$arg_xml->addAttribute('type', strtolower($op_split[0]));
+	$arg_xml[0] = $op_split[1];
+	return true;
 }
 
 function is_valid_string(string $str): bool {
