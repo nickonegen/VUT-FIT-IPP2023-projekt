@@ -1,0 +1,50 @@
+.IPPcode23
+
+# jumphell.src for testing STATP
+
+# There are 13 jumps - 4 fwjumps, 5 backjumps and 4 badjumps;
+# 50 total lines, 38 with instructions, 21 with comments
+
+LABEL start						# label 1
+PUSHS int@5
+PUSHS int@10
+DEFVAR GF@kek
+DEFVAR GF@lol
+DEFVAR GF@result
+POPS GF@lol
+POPS GF@kek
+ADD GF@result GF@kek GF@lol
+PUSHS GF@result
+JUMPIFEQ label1 GF@result int@15		# jump 1, fwjump 1
+JUMPIFNEQ badjump1 GF@result int@15	# jump 2, badjump 1
+
+LABEL label1						# label 2
+POPS GF@kek
+MOVE GF@lol int@3
+SUB GF@result GF@kek GF@lol
+JUMPIFEQ label2 GF@result int@12		# jump 3, fwjump 2
+JUMPIFNEQ badjump2 GF@result int@12	# jump 4, badjump 2
+
+LABEL label3						# label 3
+MOVE GF@kek int@2
+MOVE GF@lol int@3
+MUL GF@result GF@kek GF@lol
+JUMPIFEQ end GF@result int@6			# jump 5, fwjump 3
+JUMPIFNEQ badjump3 GF@result int@6		# jump 6, badjump 3
+JUMP end							# jump 7, fwjump 4
+JUMP start 						# jump 8, backjump 1
+JUMP start 						# jump 9, backjump 2
+JUMP start 						# jump 10, backjump 3
+JUMP start 						# jump 11, backjump 4
+
+LABEL label2						# label 4
+MOVE GF@lol int@12
+MOVE GF@kek int@4
+IDIV GF@result GF@lol GF@kek
+JUMPIFEQ label3 GF@result int@3		# jump 12, backjump 5
+JUMPIFNEQ badjump4 GF@result int@3		# jump 13, badjump 4
+
+LABEL end							# label 5
+WRITE string@Program\010finished\010successfully
+EXIT int@0
+ 
