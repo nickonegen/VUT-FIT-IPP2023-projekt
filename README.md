@@ -1,12 +1,14 @@
 # IPP PROJEKT, FIT VUT 2023
 
-*Projekt (parser a interprét IPPcode23) z predmetu Princípy programovacích jazykov a OOP (IPP), štvrtý semester bakalárskeho štúdia BIT na FIT VUT/BUT, ak. rok 2022/2023*
+*Projekt (parser a interprét IPPcode23) z predmetu Princípy programovacích jazykov a objektovo-orientovaného programovania (IPP), štvrtý semester bakalárskeho štúdia BIT na FIT VUT/BUT, ak. rok 2022/2023*
 
 🔒 **Aktívny súkromný repozitár — nezverejňovať!**
 
 Hodnotenie: ?? / 20
 
 Zadanie: [ipp23spec.pdf](ipp23spec.pdf), originál [MOODLE PDF](https://moodle.vut.cz/mod/folder/view.php?id=272411https://moodle.vut.cz/pluginfile.php/532505/mod_folder/content/0/ipp23spec.pdf)
+
+----------------------------------------------
 
 ## Časť 1 (`parse.php`)
 
@@ -15,9 +17,8 @@ Hodnotenie: ?? / 8<br>（?）
 ### TODO-List
 
 * [X] ⏰ 2023-02-08 **Zadanie**
-* [ ] ⏰ 2023-02-13 **Registrácia na pokusné odovzdanie**
-* [ ] ⏰ 2023-02-14 **Registrácia na projekt**
-* [ ] ⏰ 2023-02-14 **Fixácia zadania**
+* [X] ⏰ 2023-02-13 **Registrácia na projekt**
+* [X] ⏰ 2023-02-14 **Fixácia zadania**
 * [ ] ⏰ 2023-03-06 **Pokusné odovzdanie**
 * [ ] ⏰ 2023-03-13 **Deadline**
 
@@ -32,8 +33,11 @@ Hodnotenie: ?? / 8<br>（?）
 Hodnotenie: ?? / 12<br>（?）
 
 * [X] ⏰ 2023-02-08 **Zadanie**
-* [ ] ⏰ 2023-02-13 **Registrácia na pokusné odovzdanie**
-* [ ] ⏰ 2023-02-14 **Fixácia zadania**
+* [X] ⏰ 2023-02-14 **Fixácia zadania**
 * [ ] ⏰ 2023-02-20 **Registrácia na projekt**
 * [ ] ⏰ 2023-04-11 **Pokusné odovzdanie**
 * [ ] ⏰ 2023-04-18 **Deadline**
+
+----------------------------------------------
+
+<div align="center"><a href="https://wakatime.com"><img alt="wakatime" src="https://wakatime.com/badge/user/dd421270-8f1c-43aa-aa5b-ec52a2a18852/project/79820b50-5200-467f-a422-908d92f2f926.svg" /></a></div>
