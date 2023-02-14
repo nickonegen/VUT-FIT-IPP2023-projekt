@@ -16,8 +16,8 @@ ini_set('display_errors', 'stderr');
 define('RETCODE', [
 	'OK'		=> 0,
 	'EPARAM'	=> 10,
-	'ENOENT'	=> 11, // Zbytočné? (používa sa iba stdin)
-	'EWRITE'	=> 12, // Zbytočné? (používa sa stdout, súbor iba s STATP)
+	'ENOENT'	=> 11,
+	'EWRITE'	=> 12,
 	'ENOHEAD'	=> 21,
 	'EOPCODE'	=> 22,
 	'EANLYS'	=> 23,
@@ -37,13 +37,14 @@ $opts = getopt('', [
 	'badjumps',
 	'frequent',
 	'print::',
-	'eol'
+	'eol',
 ]);
 
 /** @var \ArrayObject GINFO Globálny objekt pre kontroly a štatistiky */
 $GINFO = [
 	'header'	=> false,	// Prítomnosť hlavičky
 	'fancy'	=> true,	// Farebný výstup
+	'start'	=> microtime(true) * 1000, // Čas spustenia
 	'stats'	=> false,	// Vlajka výpisu štatistík
 	'statsf'	=> '',	// Súbor pre výpis štatistík
 	'statord'	=> [],	// Poradie výpisu štatistík
@@ -58,8 +59,12 @@ $GINFO = [
 	'jumps'	=> [
 		'fw'		=> 0,	// Počet skokov dopredu
 		'bw'		=> 0,	// Počet skokov dozadu
+		'bad'	=> 0,	// Počet skokov na nedefinované návestie
 	]
 ];
+
+/** @var int FANCYSTATPWIDTH Šírka textového "fancy" výstupu štatistík */
+define('FANCYSTATPWIDTH', 70);
 
 /** @var \ArrayObject DTYPE Výčet dátových typov */
 define('DTYPE', [
@@ -248,12 +253,16 @@ foreach ($opts as $opt => $val) {
 	if ($opt == 'stats') {
 		// --stats nemôže byť 2x
 		if ($GINFO['stats']) {
-			throw_err('EPARAM', null, "--stats can't be used multiple times");
+			throw_err(
+				'EPARAM',
+				null,
+				"--stats can't be used multiple times",
+			);
 		}
 
 		// FILE musí byť zadaný
 		if (!$val) {
-			throw_err('EPARAM', null, "--stats requires a file name");
+			throw_err('EPARAM', null, '--stats requires a file name');
 		}
 
 		$GINFO['stats'] = true;
@@ -264,7 +273,7 @@ foreach ($opts as $opt => $val) {
 	if ($opt != 'stats' && !$GINFO['stats']) {
 		throw_err('EPARAM', null, "--stats must be present before --$opt");
 	}
-	
+
 	$GINFO['statord'][$opt] = $val;
 }
 
@@ -313,8 +322,45 @@ for ($lineno = 0; ($line = fgets(STDIN)); $lineno++) {
 $GINFO['header'] ||
 	throw_err('ENOHEAD', $lineno, 'Missing .IPPcode23 header (empty file)');
 
+/* Výpis štatistík */
+
+if ($GINFO['stats']) {
+	$fancy = $GINFO['fancy'];
+	$stat_file = fopen($GINFO['statf'], 'w');
+	if (!$stat_file) {
+		throw_err('EWRITE', null, "Can't open file {$GINFO['statf']}");
+	}
+
+	// Výpis štatistík
+	$stat_string = $fancy
+		? 'parse.php for IPPcode23 by xonege99  ' .
+			sprintf('T=%.2f ms ', microtime(true) * 1000 - $GINFO['start']) .
+			"({$GINFO['lines']} lines processed)\n" .
+			str_repeat('-', 70) .
+			"\n"
+		: '';
+
+	$total = count($GINFO['statord']);
+	$i = 0;
+	foreach ($GINFO['statord'] as $opt => $val) {
+		$stat_string .= print_stat($opt, $val);
+		$i++;
+		if ($i < $total) {
+			$stat_string .= "\n";
+		}
+	}
+
+	$stat_string .= !$fancy ? '' : "\n" . str_repeat('-', 70);
+	fwrite($stat_file, $stat_string);
+	fclose($stat_file);
+}
+
+/* Výpis XML reprezentácie kódu */
+
 echo $XML->asXML();
 exit(RETCODE['OK']);
+
+/* Funkcie */
 
 function parse_line(string $line): void {
 	global $GINFO;
@@ -506,17 +552,84 @@ function is_header(string $line): bool {
 	return (bool) preg_match_all('/^\.IPPcode23$/', $line);
 }
 
+function print_stat(string $stat_name, ?string $stat_optval): string {
+	global $GINFO;
+
+	$fancy = $GINFO['fancy'];
+	$stat_title = '';
+	$stat_string = '';
+
+	switch ($stat_name) {
+		case 'loc':
+			$stat_title = 'Lines with instructions';
+			$stat_string .= $GINFO['i_lines'];
+			break;
+		case 'comments':
+			$stat_title = 'Lines with comments';
+			$stat_string .= $GINFO['c_lines'];
+			break;
+		case 'labels':
+			$stat_title = 'Labels';
+			$stat_string .= count($GINFO['labels']['def']);
+			break;
+		case 'jumps':
+			$stat_title = 'Total jumps';
+			$stat_string .=
+				$GINFO['jumps']['fw'] +
+				$GINFO['jumps']['bw'] +
+				$GINFO['jumps']['bad'];
+			break;
+		case 'fwjumps':
+			$stat_title = 'Forward jumps';
+			$stat_string .= $GINFO['jumps']['fw'];
+			break;
+		case 'backjumps':
+			$stat_title = 'Backward jumps';
+			$stat_string .= $GINFO['jumps']['bw'];
+			break;
+		case 'badjumps':
+			$stat_title = 'Bad jumps';
+			$stat_string .= $GINFO['jumps']['bad'];
+			break;
+		case 'frequent':
+			$stat_title = 'Most frequent instructions';
+			$stat_string .= 'TODO';
+			break;
+		case 'print':
+			$stat_string .= $stat_optval;
+			break;
+		case 'eol':
+			$stat_string .= '';
+			break;
+		default:
+			throw_err(
+				'EPARAM',
+				null,
+				"Error in parsing statistic $stat_name",
+			);
+	}
+
+	return $fancy
+		? $stat_title .
+				str_repeat(
+					' ',
+					FANCYSTATPWIDTH - strlen($stat_title . $stat_string),
+				) .
+				$stat_string
+		: $stat_string;
+}
+
 function throw_err(string $ecode, ?int $ln, string $msg): void {
 	global $GINFO;
 
 	$color = $GINFO['fancy'];
-	$err_string = "";
+	$err_string = '';
 
 	$ERR = $color ? "\033[31;49;1mERR!\033[0m" : 'ERR!';
 	$CODE = $color ? "\033[35;49mcode\033[0m" : 'code';
 	$err_string .= "$ERR $CODE $ecode\n";
 	$LINE = $color ? "\033[35;49mline\033[0m" : 'line';
-	$err_string .= $ln ? "$ERR $LINE $ln\n" : "";
+	$err_string .= $ln ? "$ERR $LINE $ln\n" : '';
 	$err_string .= "$ERR $msg";
 
 	error_log($err_string);
