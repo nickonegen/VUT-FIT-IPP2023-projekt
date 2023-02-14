@@ -27,17 +27,38 @@ define('RETCODE', [
 /** @var \ArrayObject $opts Parametre spustenia */
 $opts = getopt('', [
 	'help',
-	// STATP?
+	'stats::',
+	'loc',
+	'comments',
+	'labels',
+	'jumps',
+	'fwjumps',
+	'backjumps',
+	'badjumps',
+	'frequent',
+	'print::',
+	'eol'
 ]);
 
-/** @var \ArrayObject GINFO Objekt pre kontroly */
+/** @var \ArrayObject GINFO Globálny objekt pre kontroly a štatistiky */
 $GINFO = [
-	'header'	=> false, // Prítomnosť hlavičky
-	'stats'	=> false, // --stats (STATP neimplementované)
-	'color'	=> true, // Farebný výstup
-	'lines'	=> 0, // Počet riadkov vstupu
-	'i_lines'	=> 0, // Počet riadkov s inštrukciami
-	'c_lines'	=> 0, // Počet riadkov s komentárami
+	'header'	=> false,	// Prítomnosť hlavičky
+	'fancy'	=> true,	// Farebný výstup
+	'stats'	=> false,	// Vlajka výpisu štatistík
+	'statsf'	=> '',	// Súbor pre výpis štatistík
+	'statord'	=> [],	// Poradie výpisu štatistík
+	'lines'	=> 0,	// Počet riadkov vstupu
+	'i_lines'	=> 0,	// Počet riadkov s inštrukciami (--loc)
+	'c_lines'	=> 0,	// Počet riadkov s komentárami (--comments)
+	'opstat'	=> [],	// Štatistika inštrukcií
+	'labels'	=> [
+		'def'	=> [],	// Zoznam definovaných návestí
+		'ndef'	=> [],	// Zoznam použitých, zatiaľ nedefinovaných návestí
+	],
+	'jumps'	=> [
+		'fw'		=> 0,	// Počet skokov dopredu
+		'bw'		=> 0,	// Počet skokov dozadu
+	]
 ];
 
 /** @var \ArrayObject DTYPE Výčet dátových typov */
@@ -219,6 +240,32 @@ if (isset($opts['help'])) {
 	echo "found, XML representation of the code is printed on\n";
 	echo "standard output.\n";
 	exit(RETCODE['OK']);
+}
+
+/* Kontrola parametrov (všetky argumenty za --help sú STATP) */
+foreach ($opts as $opt => $val) {
+	// --stats=FILE musí byť prvý parameter
+	if ($opt == 'stats') {
+		// --stats nemôže byť 2x
+		if ($GINFO['stats']) {
+			throw_err('EPARAM', null, "--stats can't be used multiple times");
+		}
+
+		// FILE musí byť zadaný
+		if (!$val) {
+			throw_err('EPARAM', null, "--stats requires a file name");
+		}
+
+		$GINFO['stats'] = true;
+		$GINFO['statf'] = $val;
+		continue;
+	}
+
+	if ($opt != 'stats' && !$GINFO['stats']) {
+		throw_err('EPARAM', null, "--stats must be present before --$opt");
+	}
+	
+	$GINFO['statord'][$opt] = $val;
 }
 
 /* Vytvorenie XML reprezentácie kódu */
@@ -459,14 +506,18 @@ function is_header(string $line): bool {
 	return (bool) preg_match_all('/^\.IPPcode23$/', $line);
 }
 
-function throw_err(string $ecode, int $ln, string $msg): void {
+function throw_err(string $ecode, ?int $ln, string $msg): void {
 	global $GINFO;
 
-	$color = $GINFO['color'];
+	$color = $GINFO['fancy'];
+	$err_string = "";
+
 	$ERR = $color ? "\033[31;49;1mERR!\033[0m" : 'ERR!';
 	$CODE = $color ? "\033[35;49mcode\033[0m" : 'code';
+	$err_string .= "$ERR $CODE $ecode\n";
 	$LINE = $color ? "\033[35;49mline\033[0m" : 'line';
-	$err_string = "$ERR $CODE $ecode\n" . "$ERR $LINE $ln\n" . "$ERR $msg";
+	$err_string .= $ln ? "$ERR $LINE $ln\n" : "";
+	$err_string .= "$ERR $msg";
 
 	error_log($err_string);
 	exit(RETCODE[$ecode]);
