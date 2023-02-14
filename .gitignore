@@ -7,6 +7,10 @@ test.php
 testanlys.sh
 testanlys.out
 
-# Private stuff
+# Other scripts
+is_it_ok.sh
+testdir/**
+
+# Other
 **.zip
 **-private**
