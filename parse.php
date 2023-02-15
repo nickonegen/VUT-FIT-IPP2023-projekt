@@ -24,8 +24,8 @@ define('RETCODE', [
 	'EINT'	=> 99,
 ]);
 
-/** @var \ArrayObject VALIDOPTS Zoznam rozpoznávaných parametrov */
-define('VALIDOPTS', [
+/** @var \ArrayObject VALID_OPTS Zoznam rozpoznávaných parametrov */
+define('VALID_OPTS', [
 	'help'		=> 'no',
 	'stats'		=> 'req',
 	'loc'		=> 'no',
@@ -94,14 +94,14 @@ foreach ($argv as $arg) {
 	[$opt, $val] = explode('=', $arg, 2) + [1 => null];
 
 	// Neznámy parameter
-	if (!in_array($opt, array_keys(VALIDOPTS))) {
+	if (!in_array($opt, array_keys(VALID_OPTS))) {
 		continue;
 	}
 
-	if (VALIDOPTS[$opt] == 'req' && !$val) {
+	if (VALID_OPTS[$opt] == 'req' && !$val) {
 		// Parameter s povinnou hodnotou bez hodnoty
 		throw_err('EPARAM', null, "Missing value for option --$opt");
-	} elseif (VALIDOPTS[$opt] == 'no' && $val) {
+	} elseif (VALID_OPTS[$opt] == 'no' && $val) {
 		// Parameter bez hodnoty s hodnotou
 		throw_err('EPARAM', null, "Option --$opt doesn't take a value");
 	}
