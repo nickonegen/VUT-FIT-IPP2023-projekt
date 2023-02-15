@@ -18,7 +18,7 @@ function ippcstat_collect(): string {
 	global $GINFO;
 	$fancy = $GINFO['fancy'];
 	$stat_string = '';
-	
+
 	// Výpis štatistík
 	$total = count($GINFO['statord']);
 	$i = 0;
@@ -49,10 +49,10 @@ function ippcstat_collect(): string {
 
 /**
  * Získanie jednej štatistiky.
- * 
+ *
  * @param string $stat_name Názov štatistiky (parameter)
  * @param string|null $stat_optval Hodnota parametra (pre --print)
- * 
+ *
  * @return string Riadok štatistiky
  */
 function ippcstat_obtain(string $stat_name, ?string $opt_val): string {

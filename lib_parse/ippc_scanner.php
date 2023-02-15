@@ -308,7 +308,7 @@ function ippc_parse_line(string $line): void {
 				);
 		}
 	}
-	
+
 	// Štatistiky
 	ippcstat_reg_instruction($instr);
 	switch ($instr_id) {
