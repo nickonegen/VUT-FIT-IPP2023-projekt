@@ -10,7 +10,7 @@
 
 ini_set('display_errors', 'stderr');
 
-include 'lib_parse/ippc_scanner.php';
+include 'lib_parse/ippc_parser.php';
 
 /** @var \ArrayObject RETCODE Návratový kód */
 define('RETCODE', [
