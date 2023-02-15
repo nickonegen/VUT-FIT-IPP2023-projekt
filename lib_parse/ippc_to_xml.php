@@ -26,7 +26,7 @@ function ippcXML_new_root(): SimpleXMLElement {
 function ippcXML_asXML(bool $format = false): string {
 	global $XML;
 
-	if ($format) {
+	if (!$format) {
 		return $XML->asXML();
 	}
 

@@ -158,8 +158,7 @@ if ($GINFO['stats']) {
 }
 
 /* Výpis XML reprezentácie kódu */
-//echo ippcXML_asXML();
-print_r($GINFO);
+echo ippcXML_asXML(true);
 exit(RETCODE['OK']);
 
 /* Pomocné funkcie */
