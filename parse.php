@@ -483,7 +483,7 @@ function parse_line(string $line): void {
 	}
 
 	// Pridanie inštrukcie do zoznamu (pre štatistiky)
-	// TODO
+	register_instruction($inst[0]);
 
 	// Pridanie náveští a skokov do zoznamu
 	switch ($inst_code) {
@@ -732,7 +732,16 @@ function print_stat(string $stat_name, ?string $stat_optval): string {
 			break;
 		case 'frequent':
 			$stat_title = 'Most frequent instructions';
-			$stat_string .= 'TODO';
+			if (empty($GINFO['opstat'])) {
+				break;
+			}
+
+			$max_op_use = max(array_values($GINFO['opstat']));
+			$stat_string .= implode(
+				',',
+				array_keys($GINFO['opstat'], $max_op_use),
+			);
+			$stat_string .= $fancy ? " {$max_op_use}" : '';
 			break;
 		case 'print':
 			$stat_string .= $stat_optval;
@@ -756,6 +765,25 @@ function print_stat(string $stat_name, ?string $stat_optval): string {
 				) .
 				$stat_string
 		: $stat_string;
+}
+
+/**
+ * Zaregistrovať inštrukciu pre štatistiky.
+ *
+ * @param string $op Inštrukcia
+ *
+ * @return void
+ */
+function register_instruction(string $op): void {
+	global $GINFO;
+
+	if (array_key_exists($op, $GINFO['opstat'])) {
+		// Inštrukcia je už definovaná
+		$GINFO['opstat'][$op]++;
+	} else {
+		// Pridať inštrukciu do zoznamu
+		$GINFO['opstat'][$op] = 1;
+	}
 }
 
 /**
