@@ -3,7 +3,7 @@ jexamxml.jar
 options
 
 # Testing
-test.php
+test.**
 test**.txt
 testanlys.sh
 testanlys.out
