@@ -6,7 +6,7 @@
 
 Hodnotenie: ?? / 20
 
-Zadanie: [ipp23spec.pdf](ipp23spec.pdf), originál [MOODLE PDF](https://moodle.vut.cz/mod/folder/view.php?id=272411https://moodle.vut.cz/pluginfile.php/532505/mod_folder/content/0/ipp23spec.pdf)
+Zadanie: [ZADANI.pdf](ZADANI.pdf), originál [MOODLE PDF](https://moodle.vut.cz/mod/folder/view.php?id=272411https://moodle.vut.cz/pluginfile.php/532505/mod_folder/content/0/ipp23spec.pdf)
 
 ----------------------------------------------
 
