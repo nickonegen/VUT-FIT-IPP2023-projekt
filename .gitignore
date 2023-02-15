@@ -2,15 +2,14 @@
 jexamxml.jar
 options
 
-# Testing scripts
-test.php
+# Testing
+test.**
+test**.txt
 testanlys.sh
 testanlys.out
 
-# Other scripts
+# Other
 is_it_ok.sh
 testdir/**
-
-# Other
 **.zip
 **-private**
