@@ -207,7 +207,6 @@ function ippc_preparse(string $line): ?string {
 		return null;
 	}
 
-	$GINFO['i_lines']++;
 	return $line;
 }
 
@@ -231,6 +230,8 @@ function ippc_parse_line(string $line): void {
 			);
 		return;
 	}
+
+	$GINFO['i_lines']++;
 
 	// Rozdelenie riadku na inštrukciu a argumenty
 	$instr_args = explode(' ', $line);
@@ -316,12 +317,16 @@ function ippc_parse_line(string $line): void {
 		case INSTR['LABEL']:
 			ippcstat_reg_label($instr_args[0]);
 			break;
-		// Skok
+		// Skok s náveštím
 		case INSTR['CALL']:
 		case INSTR['JUMP']:
 		case INSTR['JUMPIFEQ']:
 		case INSTR['JUMPIFNEQ']:
 			ippcstat_reg_jump($instr_args[0]);
+			break;
+		// Skok bez náveštia
+		case INSTR['RETURN']:
+			ippcstat_reg_jump();
 			break;
 		default: // žiadna ďalšia štatistika
 	}
