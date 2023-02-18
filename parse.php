@@ -59,6 +59,7 @@ $GINFO = [
 	'jumps'	=> [
 		'fw'		=> 0,	// Počet skokov dopredu
 		'bw'		=> 0,	// Počet skokov dozadu
+		'undet'	=> 0,	// Počet návratov
 	]
 ];
 
@@ -158,7 +159,8 @@ if ($GINFO['stats']) {
 }
 
 /* Výpis XML reprezentácie kódu */
-echo ippcXML_asXML(true);
+//echo ippcXML_asXML(true);
+print_r($GINFO);
 exit(RETCODE['OK']);
 
 /* Pomocné funkcie */

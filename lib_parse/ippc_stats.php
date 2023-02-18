@@ -79,6 +79,7 @@ function ippcstat_obtain(string $stat_name, ?string $opt_val): string {
 			$stat_string .=
 				$GINFO['jumps']['fw'] +
 				$GINFO['jumps']['bw'] +
+				$GINFO['jumps']['undet'] +
 				count($GINFO['labels']['ndef']);
 			break;
 		case 'fwjumps':
@@ -185,8 +186,14 @@ function ippcstat_reg_label(string $label): void {
  *
  * @return void
  */
-function ippcstat_reg_jump(string $label): void {
+function ippcstat_reg_jump(string $label = ''): void {
 	global $GINFO;
+
+	// Nezadaný skok (návrat z funkcie)
+	if (empty($label)) {
+		$GINFO['jumps']['undet']++;
+		return;
+	}
 
 	// Náveštie je v zozname => skok dozadu
 	if (array_search($label, $GINFO['labels']['def']) !== false) {
