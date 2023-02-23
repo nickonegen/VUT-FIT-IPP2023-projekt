@@ -10,169 +10,169 @@ include 'ippc_stats.php';
 
 /** @var \ArrayObject DTYPE Výčet dátových typov */
 define('DTYPE', [
-	'int' => 0,
-	'bool' => 1,
-	'string' => 2,
-	'nil' => 3,
+	'int'	=> 0,
+	'bool'	=> 1,
+	'string'	=> 2,
+	'nil'	=> 3,
 ]);
 
 /** @var \ArrayObject OPERAND Výčet operandov */
 define('OPERAND', [
-	'var' => 1,
-	'symb' => 2,
-	'label' => 3,
-	'type' => 4,
+	'var'	=> 1,
+	'symb'	=> 2,
+	'label'	=> 3,
+	'type'	=> 4,
 ]);
 
 /** @var \ArrayObject INSTR Výčet/objekt inštrukcií */
 define('INSTR', [
 	// Inštrukcie programových rámcov
 	'MOVE' => [
-		'id' => 1,
-		'argt' => [OPERAND['var'], OPERAND['symb']],
+		'id'		=> 1,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'CREATEFRAME' => [
-		'id' => 2,
-		'argt' => [],
+		'id'		=> 2,
+		'argt'	=> [],
 	],
 	'PUSHFRAME' => [
-		'id' => 3,
-		'argt' => [],
+		'id'		=> 3,
+		'argt'	=> [],
 	],
 	'POPFRAME' => [
-		'id' => 4,
-		'argt' => [],
+		'id'		=> 4,
+		'argt'	=> [],
 	],
 	'DEFVAR' => [
-		'id' => 5,
-		'argt' => [OPERAND['var']],
+		'id'		=> 5,
+		'argt'	=> [OPERAND['var']],
 	],
 	'CALL' => [
-		'id' => 6,
-		'argt' => [OPERAND['label']],
+		'id'		=> 6,
+		'argt'	=> [OPERAND['label']],
 	],
 	'RETURN' => [
-		'id' => 7,
-		'argt' => [],
+		'id'		=> 7,
+		'argt'	=> [],
 	],
 	// Inštrukcie dátového zásobníka
 	'PUSHS' => [
-		'id' => 8,
-		'argt' => [OPERAND['symb']],
+		'id'		=> 8,
+		'argt'	=> [OPERAND['symb']],
 	],
 	'POPS' => [
-		'id' => 9,
-		'argt' => [OPERAND['var']],
+		'id'		=> 9,
+		'argt'	=> [OPERAND['var']],
 	],
 	// Aritmetické a dátové inštrukcie
 	'ADD' => [
-		'id' => 10,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 10,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'SUB' => [
-		'id' => 11,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 11,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'MUL' => [
-		'id' => 12,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 12,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'IDIV' => [
-		'id' => 13,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 13,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'LT' => [
-		'id' => 14,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 14,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'GT' => [
-		'id' => 15,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 15,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'EQ' => [
-		'id' => 16,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 16,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'AND' => [
-		'id' => 17,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 17,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'OR' => [
-		'id' => 18,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 18,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'NOT' => [
-		'id' => 19,
-		'argt' => [OPERAND['var'], OPERAND['symb']],
+		'id'		=> 19,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'INT2CHAR' => [
-		'id' => 20,
-		'argt' => [OPERAND['var'], OPERAND['symb']],
+		'id'		=> 20,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'STRI2INT' => [
-		'id' => 21,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 21,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	// Vstupno-výstupné inštrukcie
 	'READ' => [
-		'id' => 22,
-		'argt' => [OPERAND['var'], OPERAND['type']],
+		'id'		=> 22,
+		'argt'	=> [OPERAND['var'], OPERAND['type']],
 	],
 	'WRITE' => [
-		'id' => 23,
-		'argt' => [OPERAND['symb']],
+		'id'		=> 23,
+		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie reťazcov
 	'CONCAT' => [
-		'id' => 24,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 24,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'STRLEN' => [
-		'id' => 25,
-		'argt' => [OPERAND['var'], OPERAND['symb']],
+		'id'		=> 25,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'GETCHAR' => [
-		'id' => 26,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 26,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'SETCHAR' => [
-		'id' => 27,
-		'argt' => [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 27,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	// Inštrukcie typu
 	'TYPE' => [
-		'id' => 28,
-		'argt' => [OPERAND['var'], OPERAND['symb']],
+		'id'		=> 28,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	// Inštrukcie riadenia toku programu
 	'LABEL' => [
-		'id' => 29,
-		'argt' => [OPERAND['label']],
+		'id'		=> 29,
+		'argt'	=> [OPERAND['label']],
 	],
 	'JUMP' => [
-		'id' => 30,
-		'argt' => [OPERAND['label']],
+		'id'		=> 30,
+		'argt'	=> [OPERAND['label']],
 	],
 	'JUMPIFEQ' => [
-		'id' => 31,
-		'argt' => [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 31,
+		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'JUMPIFNEQ' => [
-		'id' => 32,
-		'argt' => [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
+		'id'		=> 32,
+		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'EXIT' => [
-		'id' => 33,
-		'argt' => [OPERAND['symb']],
+		'id'		=> 33,
+		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie na ladenie
 	'DPRINT' => [
-		'id' => 34,
-		'argt' => [OPERAND['symb']],
+		'id'		=> 34,
+		'argt'	=> [OPERAND['symb']],
 	],
 	'BREAK' => [
-		'id' => 35,
-		'argt' => [],
+		'id'		=> 35,
+		'argt'	=> [],
 	],
 ]);
 
