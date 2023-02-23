@@ -50,7 +50,7 @@ function ippcXML_add_instruction(string $name): SimpleXMLElement {
 	global $XML;
 
 	$instruction = $XML->addChild('instruction');
-	$instruction->addAttribute('order', $GINFO['i_lines'] - 1);
+	$instruction->addAttribute('order', $GINFO['i_lines']);
 	$instruction->addAttribute('opcode', $name);
 	return $instruction;
 }
