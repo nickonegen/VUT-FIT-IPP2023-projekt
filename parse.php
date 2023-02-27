@@ -112,7 +112,7 @@ foreach ($argv as $arg) {
 		// --stats nemôže byť 2x
 		if ($GINFO['stats']) {
 			throw_err(
-				'EPARAM',
+				'EWRITE',
 				null,
 				"--stats option can't be used multiple times",
 			);
