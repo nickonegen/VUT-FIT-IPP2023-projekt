@@ -11,5 +11,6 @@ testanlys.out
 # Other
 is_it_ok.sh
 testdir/**
+x???????/**
 **.zip
 **-private**
