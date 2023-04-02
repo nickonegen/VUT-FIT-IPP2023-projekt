@@ -500,7 +500,7 @@ function ippc_remove_comments(string $line): string {
  * @return bool true, ak je riadok hlavička
  */
 function ippc_is_header(string $line): bool {
-	return (bool) preg_match_all('/^\.IPPcode23$/', $line);
+	return (bool) preg_match('/^(?:\.IPPcode23|\.IFJcode22)$/', $line);
 }
 
 /**
