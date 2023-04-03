@@ -4,8 +4,14 @@ Implementácia triedy interprétu IPPcode23.
 """
 
 import xml.etree.ElementTree as ET  # skipcq: BAN-B405
-from lib_interpret.ippc_idata import Stack, Queue, Value
-from lib_interpret.ippc_icontrol import Frame, Instruction, LabelArg, UnresolvedVariable
+from lib_interpret.ippc_idata import Stack, Queue
+from lib_interpret.ippc_icontrol import (
+    Frame,
+    Instruction,
+    LabelArg,
+    UnresolvedVariable,
+    Value,
+)
 
 
 class Interpreter:
@@ -110,7 +116,7 @@ class Interpreter:
                         operands.append(parse_operand(arg_elm))
 
                     if opcode == "LABEL":
-                        self.labels[operands[0].value] = order
+                        self.labels[operands[0].name] = order
 
                 temp_instructions[order] = Instruction(opcode, operands)
 
@@ -216,7 +222,7 @@ class Interpreter:
                 [target, typeo] = instr.operands
                 validate_operand(target, "var")
                 validate_operand(typeo, "type")
-                value = Value(typeo.value, self.input_queue.dequeue())
+                value = Value(typeo.content, self.input_queue.dequeue())
                 frame = get_frame(target.frame)
                 frame.set_variable(target.name, value)
 
