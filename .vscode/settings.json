@@ -4,6 +4,7 @@
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": true,
 	"telemetry.enableTelemetry": false,
+	"python.analysis.typeCheckingMode": "basic",
 	"conventionalCommits.scopes": [
 		"parse",
 		"STATP",
