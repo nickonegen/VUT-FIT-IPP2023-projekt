@@ -3,7 +3,7 @@ Implementácia triedy interprétu IPPcode23.
 @author: Onegen Something <xonege99@vutbr.cz>
 """
 
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET # skipcq: BAN-B405
 from lib_interpret.ippc_idata import Stack, UnresolvedVariable, Value
 from lib_interpret.ippc_icontrol import Frame, Instruction
 
@@ -46,7 +46,7 @@ class Interpreter:
         temp_instructions = {}
 
         xml = ET.parse(xml_file)
-        root = xml.getroot()
+        root = xml.getroot() # skipcq: BAN-B314
 
         # for instr_elm in root:
         # TODO: Implement
