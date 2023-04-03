@@ -19,8 +19,8 @@ Hodnotenie: ?? / 8<br>（?）
 * [X] ⏰ 2023-02-08 **Zadanie**
 * [X] ⏰ 2023-02-13 **Registrácia na projekt**
 * [X] ⏰ 2023-02-14 **Fixácia zadania**
-* [ ] ⏰ 2023-03-06 **Pokusné odovzdanie**
-* [ ] ⏰ 2023-03-13 **Deadline**
+* [X] ⏰ 2023-03-06 **Pokusné odovzdanie**
+* [X] ⏰ 2023-03-13 **Deadline**
 
 ### Môže sa hodiť
 
@@ -34,7 +34,7 @@ Hodnotenie: ?? / 12<br>（?）
 
 * [X] ⏰ 2023-02-08 **Zadanie**
 * [X] ⏰ 2023-02-14 **Fixácia zadania**
-* [ ] ⏰ 2023-02-20 **Registrácia na projekt**
+* [X] ⏰ 2023-02-20 **Registrácia na projekt**
 * [ ] ⏰ 2023-04-11 **Pokusné odovzdanie**
 * [ ] ⏰ 2023-04-18 **Deadline**
 

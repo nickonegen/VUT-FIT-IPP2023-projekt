@@ -2,7 +2,7 @@
 	"deepscan.enable": true,
 	"editor.tabSize": 5,
 	"editor.insertSpaces": false,
-	"editor.detectIndentation": false,
+	"editor.detectIndentation": true,
 	"telemetry.enableTelemetry": false,
 	"conventionalCommits.scopes": [
 		"parse",
