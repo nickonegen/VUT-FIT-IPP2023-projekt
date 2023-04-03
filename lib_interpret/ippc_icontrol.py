@@ -44,8 +44,7 @@ class Frame:
         """
         if self.has_variable(name):
             return self._variables[name]
-        else:
-            raise KeyError(f"Couldn't access non-existant variable {name}")
+        raise KeyError(f"Couldn't access non-existant variable {name}")
 
     def define_variable(self, name, value):
         """
