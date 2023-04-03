@@ -9,44 +9,13 @@ import sys
 import getopt
 import xml.etree.ElementTree as ET  # skipcq: BAN-B405
 from lib_interpret.ippc_interpreter import Interpreter
-
-"""
-Konštanty a globálne premenné
-    @const RETCODE: kódy návratových hodnôt
-    @var ginfo: globálne informácie o programovom behu
-"""
-
-RETCODE = {
-    # Celo-projektové návratové hodnoty
-    "OK": 0,
-    "EPARAM": 10,  # Chybné parametre
-    "ENOENT": 11,  # Chyba pri otváraní súboru
-    "EWRITE": 12,  # Chyba pri zápise
-    "EINT": 99,  # Interná chyba
-    # Chyby spracovania XML
-    "EXML": 31,  # Chyba XML formátovania
-    "ESTRUC": 32,  # Chybná štruktúra XML
-    # Chyby interpretácie
-    "ESEM": 52,  # Semantická chyba
-    "EOTYPE": 53,  # Nepovolený typ operandu
-    "ENOVAR": 54,  # Prístup k neexistujúcej premennej
-    "ENOFRM": 55,  # Prístup k neexistujúcemu rámcu
-    "ENOVAL": 56,  # Chýbajúca hodnota
-    "EVALUE": 57,  # Chybná hodnota
-    "ESTR": 58,  # Nesprávne zaobchádzanie s reťazcom
-}
-
-ginfo = {
-    "source": None,  # Zdrojový súbor
-    "input": None,  # Vstupný súbor
-    "stats": False,  # Štatistiky (STATI, zatiaľ nepoužité)
-    "verbose": False,  # Rozšírený výpis interpretácie
-    "fancy": False,  # Krajší výpis
-}
+from lib_interpret.ippc_idata import IEXCEPTIONC, RETCODE
 
 """
 Pomocné funkcie
-    @func print_error(str, str): vypíše chybovú hlášku na stderr
+    @func print_help(): vypíše nápovedu na stdout a ukončí program
+    @func parse_args(): spracuje argumenty programu
+    @func throw_err(str, str): vypíše chybovú hlášku na stderr a ukončí program
 """
 
 
@@ -65,22 +34,38 @@ def print_help():
     sys.exit(RETCODE.get("OK"))
 
 
+def parse_args():
+    arguments = {"source": None, "input": None}
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h", ["help", "source=", "input="])
+    except getopt.GetoptError as error:
+        throw_err("EPARAM", str(error))
+        sys.exit(RETCODE["EPARAM"])
+
+    for opt, arg in opts:
+        if opt in ("--help", "-h"):
+            print_help()
+        elif opt == "--source":
+            arguments["source"] = arg
+        elif opt == "--input":
+            arguments["input"] = arg
+
+    if arguments["source"] is None and arguments["input"] is None:
+        throw_err("EPARAM", "--source or --input required", arguments)
+
+    return arguments
+
+
 def throw_err(ecode, msg, instr=None):
-    COLORED = ginfo.get("fancy", False)
-
-    err_prefix = "ERR!"
-    code_label = "code"
-    instr_label = "instr"
-
-    if COLORED:
-        err_prefix = "\033[31;49;1mERR!\033[0m"
-        code_label = "\033[35;49mcode\033[0m"
-        instr_label = "\033[35;49minstr\033[0m"
+    err_prefix = "\033[31;49;1mERR!\033[0m"
+    code_label = "\033[35;49mcode\033[0m"
+    instr_label = "\033[35;49minstr\033[0m"
 
     err_str = f"{err_prefix} {code_label} {ecode}"
 
     if instr is not None:
-        err_str += f"\n{instr_label} {instr}"
+        err_str += f"\n{err_prefix} {instr_label} {instr}"
 
     err_str += f"\n{err_prefix} {msg}"
     print(err_str, file=sys.stderr)
@@ -89,78 +74,49 @@ def throw_err(ecode, msg, instr=None):
 
 
 """
-Spúšťacie parametre
+Hlavná časť programu
 """
 
-source_file = None
-input_file = None
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "hvf", ["help", "source=", "input="])
-except getopt.GetoptError as error:
-    throw_err("EPARAM", str(error))
-    sys.exit(RETCODE.get("EPARAM"))
+def main():
+    arguments = parse_args()
 
-for opt, arg in opts:
-    if opt in ("--help", "-h"):
-        print_help()
-    elif opt == "--source":
-        source_file = arg
-    elif opt == "--input":
-        input_file = arg
-    elif opt == "-v":
-        ginfo["verbose"] = True
-    elif opt == "-f":
-        ginfo["fancy"] = True
-
-if source_file is None and input_file is None:
-    throw_err("EPARAM", "--source or --input required")
-
-if source_file is None:
-    ginfo["source"] = sys.stdin.read()
-else:
-    with open(source_file, "r") as f:
-        ginfo["source"] = f.read()
-
-if input_file is None:
-    ginfo["input"] = sys.stdin.read()
-else:
-    with open(input_file, "r") as f:
-        ginfo["input"] = f.read()
-
-try:
-    interpret = Interpreter(ginfo.get("source"), ginfo.get("input"))
-except ET.ParseError as error:
-    throw_err("EXML", str(error))
-    sys.exit(RETCODE.get("EXML"))
-except Exception as error:
-    throw_err("ESTRUC", error.args[0])
-    sys.exit(RETCODE.get("ESTRUC"))
-
-returncode = -1
-next_instruction = interpret.peek_instruction()
-while next_instruction is not None:
     try:
-        returncode = interpret.execute_next()
-        next_instruction = interpret.peek_instruction()
-    except RuntimeError as error:
-        throw_err("ESEM", error.args[0], next_instruction)
-    except AttributeError as error:
-        throw_err("EPARAM", error.args[0], next_instruction)
-    except TypeError as error:
-        throw_err("EOTYPE", error.args[0], next_instruction)
-    except KeyError as error:
-        throw_err("ENOVAR", error.args[0], next_instruction)
-    except MemoryError as error:
-        throw_err("ENOFRM", error.args[0], next_instruction)
-    except ValueError as error:
-        throw_err("EVALUE", error.args[0], next_instruction)
-    except IndexError as error:
-        throw_err("ENOVAL", error.args[0], next_instruction)
-    except NameError as error:
-        throw_err("ESTR", error.args[0], next_instruction)
-    except Exception as error:
-        throw_err("EINT", error.args[0], next_instruction)
+        arguments["source"] = (
+            sys.stdin.read()
+            if arguments["source"] is None
+            else open(arguments["source"], "r").read()
+        )
+        arguments["input"] = (
+            sys.stdin.read()
+            if arguments["input"] is None
+            else open(arguments["input"], "r").read()
+        )
+    except FileNotFoundError as error:
+        throw_err("ENOENT", str(error))
 
-print(interpret)
-sys.exit(returncode)
+    try:
+        interpret = Interpreter(arguments.get("source"), arguments.get("input"))
+    except ET.ParseError as error:
+        throw_err("EXML", str(error))
+        sys.exit(RETCODE.get("EXML"))
+    except Exception as error:
+        throw_err("ESTRUC", error.args[0])
+        sys.exit(RETCODE.get("ESTRUC"))
+
+    returncode = -1
+    next_instruction = interpret.peek_instruction()
+    while next_instruction is not None:
+        try:
+            returncode = interpret.execute_next()
+            next_instruction = interpret.peek_instruction()
+        except Exception as error:
+            error_code = IEXCEPTIONC.get(type(error), "EINT")
+            throw_err(error_code, error.args[0], next_instruction)
+
+    print(interpret)
+    sys.exit(returncode)
+
+
+if __name__ == "__main__":
+    main()
