@@ -63,12 +63,11 @@ def parse_args():
 def read_file_content(file_path):
     if file_path is None:
         return sys.stdin.read()
-    else:
-        try:
-            with open(file_path, "r") as f:
-                return f.read()
-        except FileNotFoundError as error:
-            throw_err("ENOENT", str(error))
+    try:
+        with open(file_path, "r") as f:
+            return f.read()
+    except FileNotFoundError as error:
+        throw_err("ENOENT", str(error))
 
 
 def throw_err(ecode, msg, instr=None):
