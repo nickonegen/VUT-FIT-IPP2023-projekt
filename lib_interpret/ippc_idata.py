@@ -1,7 +1,38 @@
 """
-Pomocné triedy pre interpret.py
+Pomocné triedy a konštanty pre interpret.py
 @author: Onegen Something <xonege99@vutbr.cz>
 """
+
+RETCODE = {
+    # Celo-projektové návratové hodnoty
+    "OK": 0,
+    "EPARAM": 10,  # Chybné parametre
+    "ENOENT": 11,  # Chyba pri otváraní súboru
+    "EWRITE": 12,  # Chyba pri zápise
+    "EINT": 99,  # Interná chyba
+    # Chyby spracovania XML
+    "EXML": 31,  # Chyba XML formátovania
+    "ESTRUC": 32,  # Chybná štruktúra XML
+    # Chyby interpretácie
+    "ESEM": 52,  # Semantická chyba
+    "EOTYPE": 53,  # Nepovolený typ operandu
+    "ENOVAR": 54,  # Prístup k neexistujúcej premennej
+    "ENOFRM": 55,  # Prístup k neexistujúcemu rámcu
+    "ENOVAL": 56,  # Chýbajúca hodnota
+    "EVALUE": 57,  # Chybná hodnota
+    "ESTR": 58,  # Nesprávne zaobchádzanie s reťazcom
+}
+
+IEXCEPTIONC = {
+    RuntimeError: "ESEM",
+    AttributeError: "EPARAM",
+    TypeError: "EOTYPE",
+    KeyError: "ENOVAR",
+    MemoryError: "ENOFRM",
+    ValueError: "EVALUE",
+    IndexError: "ENOVAL",
+    NameError: "ESTR",
+}
 
 
 class Stack:
