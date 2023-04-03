@@ -7,6 +7,7 @@ Interprét XML reprezentácie programu v jazyku IPPcode23
 
 import sys
 import getopt
+import xml.etree.ElementTree as ET  # skipcq: BAN-B405
 from lib_interpret.ippc_interpreter import Interpreter
 
 """
@@ -39,7 +40,7 @@ ginfo = {
     "source": None,  # Zdrojový súbor
     "input": None,  # Vstupný súbor
     "stats": False,  # Štatistiky (STATI, zatiaľ nepoužité)
-    "verbose": False,  # Rozšírený výpis
+    "verbose": False,  # Rozšírený výpis interpretácie
     "fancy": False,  # Krajší výpis
 }
 
@@ -127,7 +128,16 @@ else:
     with open(input_file, "r") as f:
         ginfo["input"] = f.read()
 
-interpret = Interpreter(ginfo.get("source"))
+try:
+    interpret = Interpreter(ginfo.get("source"))
+except ET.ParseError as error:
+    throw_err("EXML", str(error))
+    sys.exit(RETCODE.get("EXML"))
+except Exception as error:
+    throw_err("ESTRUC", error.args[0])
+    sys.exit(RETCODE.get("ESTRUC"))
+
+
 print(interpret)
 
 throw_err("EINT", "Not implemented yet")

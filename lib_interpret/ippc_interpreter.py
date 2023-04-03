@@ -4,8 +4,8 @@ Implementácia triedy interprétu IPPcode23.
 """
 
 import xml.etree.ElementTree as ET  # skipcq: BAN-B405
-from lib_interpret.ippc_idata import Stack, Queue, UnresolvedVariable, Value
-from lib_interpret.ippc_icontrol import Frame, Instruction
+from lib_interpret.ippc_idata import Stack, Queue, Value
+from lib_interpret.ippc_icontrol import Frame, Instruction, LabelArg, UnresolvedVariable
 
 
 class Interpreter:
@@ -36,6 +36,9 @@ class Interpreter:
         repr_str = f"#############################\n"
         repr_str += f"# START OF INTERPRETER DUMP #\n"
         repr_str += f"  Program counter: {self.program_counter}\n"
+        repr_str += (
+            f"    All instructions: {self.program_counter + self.instructions.size()}\n"
+        )
         repr_str += f"  Frame stack size: {self.frame_stack.size()}\n"
         repr_str += f"    TF exists: {self.frames['temporary'] is not None}\n"
         repr_str += f"  Data stack size: {self.data_stack.size()}\n"
@@ -64,26 +67,39 @@ class Interpreter:
         # End
         return repr_str + f"# END OF INTERPRETER DUMP #\n###########################"
 
-    def parse_xml(self, xml_file):
-        """
-        Načíta XML súbor IPPcode23 a získa z neho zoznam inštrukcií.
+    def parse_xml(self, xml_str):
+        def parse_operand(arg_elm):
+            arg_type = arg_elm.attrib["type"]
+            if arg_type in ["int", "string", "bool", "float", "type", "nil"]:
+                return Value(arg_type, arg_elm.text)
+            elif arg_type == "var":
+                return UnresolvedVariable(arg_elm.text)
+            elif arg_type == "label":
+                return LabelArg(arg_elm.text)
+            else:
+                raise KeyError(f"Invalid argument type {arg_type}")
 
-        Argumenty:
-            xml_file (str): názov XML súboru
+        temp_instructions = {}
 
-        Vyvolá:
-            ET.ParseError: nesprávne XML formátovanie
-        """
-        # TODO: Implement
-        # temp_instructions = {}
+        xml = ET.fromstring(xml_str)  # skipcq: BAN-B314
+        if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
+            raise KeyError("Invalid XML root element")
 
-        # xml = ET.parse(xml_file)
-        # root = xml.getroot()  # skipcq: BAN-B314
+        for instr_elm in xml:
+            if instr_elm.tag == "instruction":
+                order = int(instr_elm.attrib["order"])
+                opcode = instr_elm.attrib["opcode"]
 
-        # for instr_elm in root:
-        # TODO: Implement
+                operands = []
+                for arg_elm in instr_elm:
+                    if arg_elm.tag in ["arg1", "arg2", "arg3"]:
+                        arg_idx = int(arg_elm.tag[-1])
+                        if arg_idx > 3 or arg_idx < 1 or arg_idx != len(operands) + 1:
+                            raise KeyError(f"Invalid argument index {arg_idx}")
 
-        # temp_instructions[order] = instruction
+                        operands.append(parse_operand(arg_elm))
 
-        # for order in sorted(temp_instructions.keys()):
-        #     self.instructions.append(temp_instructions[order])
+                temp_instructions[order] = Instruction(opcode, operands)
+
+        for order in sorted(temp_instructions.keys()):
+            self.instructions.enqueue(temp_instructions[order])
