@@ -33,8 +33,8 @@ class Interpreter:
         self.parse_xml(xml)
 
     def __repr__(self):
-        repr_str = f"#############################\n"
-        repr_str += f"# START OF INTERPRETER DUMP #\n"
+        repr_str = "#############################\n"
+        repr_str += "# START OF INTERPRETER DUMP #\n"
         repr_str += f"  Program counter: {self.program_counter}\n"
         repr_str += (
             f"    All instructions: {self.program_counter + self.instructions.size()}\n"
@@ -65,7 +65,7 @@ class Interpreter:
         repr_str += f"{self.instructions}\n"
 
         # End
-        return repr_str + f"# END OF INTERPRETER DUMP #\n###########################"
+        return repr_str + "# END OF INTERPRETER DUMP #\n###########################"
 
     def parse_xml(self, xml_str):
         def parse_operand(arg_elm):
