@@ -45,8 +45,7 @@ class Stack:
         """
         if not self.is_empty():
             return self._stack.pop()
-        else:
-            raise RuntimeError("Cannot access empty stack")
+        raise RuntimeError("Cannot access empty stack")
 
     def top(self):
         """
@@ -60,8 +59,7 @@ class Stack:
         """
         if not self.is_empty():
             return self._stack[-1]
-        else:
-            raise RuntimeError("Cannot access empty stack")
+        raise RuntimeError("Cannot access empty stack")
 
 
 class Value:
