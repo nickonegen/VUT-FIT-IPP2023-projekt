@@ -72,12 +72,11 @@ class Interpreter:
             arg_type = arg_elm.attrib["type"]
             if arg_type in ["int", "string", "bool", "float", "type", "nil"]:
                 return Value(arg_type, arg_elm.text)
-            elif arg_type == "var":
+            if arg_type == "var":
                 return UnresolvedVariable(arg_elm.text)
-            elif arg_type == "label":
+            if arg_type == "label":
                 return LabelArg(arg_elm.text)
-            else:
-                raise KeyError(f"Invalid argument type {arg_type}")
+            raise KeyError(f"Invalid argument type {arg_type}")
 
         temp_instructions = {}
 
