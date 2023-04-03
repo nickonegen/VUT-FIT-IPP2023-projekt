@@ -59,14 +59,11 @@ class Stack:
         Vráti položku na vrchole zásobníka.
 
         Vráti:
-            any: položka na vrchole zásobníka
-
-        Vyvolá:
-            RuntimeError: pokiaľ je zásobník prázdny
+            any: položka na vrchole zásobníka, None ak je zásobník prázdny
         """
         if not self.is_empty():
             return self._items[-1]
-        raise RuntimeError("Cannot access empty stack")
+        return None
 
     def size(self):
         """
@@ -126,6 +123,17 @@ class Queue:
             return self._items.pop(0)
         raise RuntimeError("Cannot access empty queue")
 
+    def top(self):
+        """
+        Vráti položku na začiatku fronty.
+
+        Vráti:
+            any: položka na začiatku fronty, None ak je fronta prázdna
+        """
+        if not self.is_empty():
+            return self._items[0]
+        return None
+
     def size(self):
         """
         Vráti počet položiek v fronte.
@@ -143,11 +151,36 @@ class Value:
     Argumenty:
         type (str): typ hodnoty
         value (any): hodnota
+
+    Vyvolá:
+        ValueError: pokiaľ je hodnota a typ nekompatibilné
     """
 
-    def __init__(self, value_type, value):
+    def __init__(self, value_type, value_raw):
         self.type = value_type
-        self.value = value
+        self.value = None
+        match value_type:
+            case "int":
+                self.value = int(value_raw)
+            case "bool":
+                self.value = bool(value_raw)
+            case "string":
+                self.value = str(value_raw)
+            case "float":
+                self.value = float(value_raw)
+            case "type":
+                self.value = str(value_raw)
+            case "nil":
+                self.value = None
 
     def __repr__(self):
         return f"{self.type}@{self.value}"
+
+    def __str__(self):
+        match self.type:
+            case "bool":
+                return str(self.value).lower()
+            case "nil":
+                return ""
+            case _:
+                return str(self.value)
