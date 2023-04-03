@@ -163,4 +163,4 @@ while next_instruction is not None:
         throw_err("EINT", error.args[0], next_instruction)
 
 print(interpret)
-exit(returncode)
+sys.exit(returncode)
