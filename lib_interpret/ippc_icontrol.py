@@ -3,8 +3,6 @@ Triedy pre ovládanie toku interprétu jazyka IPPcode23.
 @author: Onegen Something <xonege99@vutbr.cz>
 """
 
-from lib_interpret.ippc_idata import Stack, Value
-
 
 class Frame:
     """
