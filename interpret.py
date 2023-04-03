@@ -32,7 +32,7 @@ RETCODE = {
     "ENOVAR": 54,  # Prístup k neexistujúcej premennej
     "ENOFRM": 55,  # Prístup k neexistujúcemu rámcu
     "ENOVAL": 56,  # Chýbajúca hodnota
-    "EBADVL": 57,  # Chybná hodnota
+    "EVALUE": 57,  # Chybná hodnota
     "ESTR": 58,  # Nesprávne zaobchádzanie s reťazcom
 }
 
@@ -129,7 +129,7 @@ else:
         ginfo["input"] = f.read()
 
 try:
-    interpret = Interpreter(ginfo.get("source"))
+    interpret = Interpreter(ginfo.get("source"), ginfo.get("input"))
 except ET.ParseError as error:
     throw_err("EXML", str(error))
     sys.exit(RETCODE.get("EXML"))
@@ -137,7 +137,30 @@ except Exception as error:
     throw_err("ESTRUC", error.args[0])
     sys.exit(RETCODE.get("ESTRUC"))
 
+returncode = -1
+next_instruction = interpret.peek_instruction()
+while next_instruction is not None:
+    try:
+        returncode = interpret.execute_next()
+        next_instruction = interpret.peek_instruction()
+    except RuntimeError as error:
+        throw_err("ESEM", error.args[0], next_instruction)
+    except AttributeError as error:
+        throw_err("EPARAM", error.args[0], next_instruction)
+    except TypeError as error:
+        throw_err("EOTYPE", error.args[0], next_instruction)
+    except KeyError as error:
+        throw_err("ENOVAR", error.args[0], next_instruction)
+    except MemoryError as error:
+        throw_err("ENOFRM", error.args[0], next_instruction)
+    except ValueError as error:
+        throw_err("EVALUE", error.args[0], next_instruction)
+    except IndexError as error:
+        throw_err("ENOVAL", error.args[0], next_instruction)
+    except NameError as error:
+        throw_err("ESTR", error.args[0], next_instruction)
+    except Exception as error:
+        throw_err("EINT", error.args[0], next_instruction)
 
 print(interpret)
-
-throw_err("EINT", "Not implemented yet")
+exit(returncode)
