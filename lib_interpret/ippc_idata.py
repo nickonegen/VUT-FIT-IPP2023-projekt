@@ -151,21 +151,3 @@ class Value:
 
     def __repr__(self):
         return f"{self.type}@{self.value}"
-
-
-class UnresolvedVariable:
-    """
-    Trieda reprezentujúca premennú v argumente inštrukcie, ktorá bude
-    počas interpretácie nahradená jej hodnotou.
-
-    Argumenty:
-        varid (str): IPPcode23 premenná (formát xF@id)
-    """
-
-    def __init__(self, arg):
-        self.frame, self.name = arg.split("@", maxsplit=1)
-        if self.frame.upper() not in ("GF", "LF", "TF"):
-            raise ValueError(f"Invalid variable name: {arg}")
-
-    def __repr__(self):
-        return f"{self.frame}@{self.name}"
