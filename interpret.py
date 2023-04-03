@@ -38,7 +38,7 @@ def parse_args():
     arguments = {"source": None, "input": None}
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "h", ["help", "source=", "input="])
+        opts, _ = getopt.getopt(sys.argv[1:], "h", ["help", "source=", "input="])
     except getopt.GetoptError as error:
         throw_err("EPARAM", str(error))
         sys.exit(RETCODE["EPARAM"])
@@ -100,7 +100,7 @@ def main():
     except ET.ParseError as error:
         throw_err("EXML", str(error))
         sys.exit(RETCODE.get("EXML"))
-    except Exception as error:
+    except Exception as error:  # skipcq: PYL-W0703 - catch all exceptions
         throw_err("ESTRUC", error.args[0])
         sys.exit(RETCODE.get("ESTRUC"))
 
@@ -110,11 +110,12 @@ def main():
         try:
             returncode = interpret.execute_next()
             next_instruction = interpret.peek_instruction()
-        except Exception as error:
+        except Exception as error:  # skipcq: PYL-W0703 - catch all exceptions
             error_code = IEXCEPTIONC.get(type(error), "EINT")
             throw_err(error_code, error.args[0], next_instruction)
 
-    print(interpret)
+    # DEBUG OUTPUT
+    print("\n" + repr(interpret))
     sys.exit(returncode)
 
 
