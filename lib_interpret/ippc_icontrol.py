@@ -5,12 +5,7 @@ Triedy pre ovládanie toku interprétu jazyka IPPcode23.
 
 
 class Frame:
-    """
-    Trieda reprezentujúca dátový rámec združujúci premenné.
-
-    Atribúty:
-        _variables (dict): slovník premenných
-    """
+    """Trieda reprezentujúca dátový rámec združujúci premenné"""
 
     def __init__(self):
         self._variables = {}
@@ -18,90 +13,40 @@ class Frame:
     def __repr__(self):
         if self.size() == 0:
             return ""
-        return (
-            "\n".join([f"    {k} = {repr(v)}" for k, v in self._variables.items()])
-            + "\n"
-        )
+
+        rstr = "\n".join(f"    {k} = {repr(v)}" for k, v in self._variables.items())
+        return f"{rstr}\n"
 
     def size(self):
-        """
-        Vráti počet premenných v rámci.
-
-        Vráti:
-            int: počet premenných v rámci
-        """
+        """Získa počet premenných v rámci"""
         return len(self._variables)
 
     def has_variable(self, name):
-        """
-        Dotaz na existenciu premennej v rámci.
-
-        Argumenty:
-            name (str): názov premennej
-
-        Vráti:
-            bool: true, ak sa premenná nachádza v rámci, inak false
-        """
+        """Dotaz na existenciu premennej v rámci"""
         return name in self._variables
 
     def get_variable(self, name):
-        """
-        Získa hodnotu premennej s daným názvom.
-
-        Argumenty:
-            name (str): názov premennej
-
-        Vráti:
-            Value: hodnota premennej
-
-        Vyvolá:
-            KeyError: pokiaľ sa premenná nenachádza v rámci
-        """
+        """Získa hodnotu premennej s daným názvom (neexistuje -> ENOVAR)"""
         if self.has_variable(name):
             return self._variables[name]
         raise KeyError(f"Couldn't access non-existant variable {name}")
 
     def define_variable(self, name):
-        """
-        Definuje novú premennú v rámci.
-
-        Argumenty:
-            name (str): názov premennej
-
-        Vyvolá:
-            KeyError: pokiaľ sa premenná s daným názvom už nachádza v rámci
-        """
+        """Deklaruje novú premennú v rámci (redeklarácia -> ESEM)"""
         if not self.has_variable(name):
             self._variables[name] = None
         else:
-            raise KeyError(f"Redefinition of variable {name}")
+            raise RuntimeError(f"Redefinition of variable {name}")
 
     def set_variable(self, name, value):
-        """
-        Nastaví hodnotu definovanej premennej.
-
-        Argumenty:
-            name (str): názov premennej
-            value (Value): hodnota premennej
-
-        Vyvolá:
-            KeyError: pokiaľ sa premenná nenachádza v rámci
-        """
+        """Nastaví hodnotu premennej v rámci (neexistuje -> ENOVAR)"""
         if self.has_variable(name):
             self._variables[name] = value
         else:
             raise KeyError(f"Couldn't set non-existant variable {name}")
 
     def delete_variable(self, name):
-        """
-        Odstráni premennú z rámca (TODO: je toto vôbec potrebné?)
-
-        Argumenty:
-            name (str): názov premennej
-
-        Vyvolá:
-            KeyError: pokiaľ sa premenná nenachádza v rámci
-        """
+        """Odstráni premennú z rámca (neexistuje -> ENOVAR)"""
         if self.has_variable(name):
             del self._variables[name]
         else:
@@ -110,7 +55,7 @@ class Frame:
 
 class Instruction:
     """
-    Trieda reprezentujúca inštrukciu jazyka IPPcode23.
+    Trieda reprezentujúca inštrukciu jazyka IPPcode23
 
     Atribúty:
         opcode (str): kód inštrukcie
@@ -126,57 +71,83 @@ class Instruction:
         return f"{self.opcode} {operands}"
 
     def replace_operand(self, index, value):
-        """
-        Nahradí operand inštrukcie.
-
-        Argumenty:
-            index (int): index operandu
-            value (Value): nová hodnota operandu
-        """
+        """Nahradí operand inštrukcie na danom indexe"""
         self.operands[index] = value
 
     def next_unresolved(self):
-        """
-        Dotaz na existenciu premenných s nerozhodnutou hodnotou v inštrukcii.
-
-        Vráti:
-            int: index prvého nerozhodnutého operandu, alebo -1 pokiaľ
-                inštrukcia takýto operand nemá
-        """
+        """Získa index ďalšieho nedefinovaného operandu (žiadny -> -1)"""
         for index, operand in enumerate(self.operands):
             if isinstance(operand, UnresolvedVariable):
                 return index
         return -1
 
 
+class Value:
+    """
+    Trieda pre reprezentáciu hodnoty v IPPcode23.
+
+    Atribúty:
+        type (str): typ hodnoty
+        value (any): hodnota
+
+    Vyvolá:
+        TypeError: pokiaľ je hodnota a typ nekompatibilné
+    """
+
+    def __init__(self, value_type, value_raw):
+        self.type = value_type
+        match value_type:
+            case "int":
+                self.content = int(value_raw)
+            case "bool":
+                self.content = bool(value_raw)
+            case "string":
+                self.content = str(value_raw)
+            case "float":
+                self.content = float(value_raw)
+            case "type":
+                self.content = str(value_raw)
+            case "nil":
+                self.content = None
+            case _:
+                raise TypeError(f"Invalid value type: {value_type}")
+
+    def __repr__(self):
+        return f"{self.type}@{self.content}"
+
+    def __str__(self):
+        match self.type:
+            case "bool":
+                return str(self.content).lower()
+            case "nil":
+                return ""
+            case _:
+                return str(self.content)
+
+
 class UnresolvedVariable:
     """
-    Trieda reprezentujúca premennú v argumente inštrukcie, ktorá bude
-    počas interpretácie nahradená jej hodnotou.
+    Trieda reprezentujúca premennú v argumente inštrukcie, ktorej je
+    nutné počas interpretácie získať hodnotu (rieši execute_next())
 
-    Argumenty:
+    Atribúty:
         varid (str): IPPcode23 premenná (formát xF@id)
 
     Vyvolá:
-        AttributeError: pokiaľ je formát argumentu neplatný
+        RuntimeError: pokiaľ je formát argumentu neplatný
     """
 
     def __init__(self, arg):
         self.frame, self.name = arg.split("@", maxsplit=1)
         if self.frame.upper() not in ("GF", "LF", "TF"):
-            raise AttributeError(f"Invalid variable name: {arg}")
+            raise RuntimeError(f"Invalid variable name: {arg}")
 
     def __repr__(self):
         return f"{self.frame}@{self.name}"
 
 
 class LabelArg:
-    """
-    Trieda reprezentujúca náveštie v skokovej inštrukcií
-
-    Argumenty:
-        label (str): náveštie
-    """
+    """Trieda reprezentujúca náveštie v skokovej inštrukcií"""
 
     def __init__(self, label):
         self.label = label
