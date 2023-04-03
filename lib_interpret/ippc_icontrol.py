@@ -3,7 +3,7 @@ Triedy pre ovládanie toku interprétu jazyka IPPcode23.
 @author: Onegen Something <xonege99@vutbr.cz>
 """
 
-from lib_interpret.ippc_idata import Stack, UnresolvedVariable, Value
+from lib_interpret.ippc_idata import Stack, Value
 
 
 class Frame:
@@ -131,3 +131,36 @@ class Instruction:
             if isinstance(operand, UnresolvedVariable):
                 return index
         return -1
+
+
+class UnresolvedVariable:
+    """
+    Trieda reprezentujúca premennú v argumente inštrukcie, ktorá bude
+    počas interpretácie nahradená jej hodnotou.
+
+    Argumenty:
+        varid (str): IPPcode23 premenná (formát xF@id)
+    """
+
+    def __init__(self, arg):
+        self.frame, self.name = arg.split("@", maxsplit=1)
+        if self.frame.upper() not in ("GF", "LF", "TF"):
+            raise ValueError(f"Invalid variable name: {arg}")
+
+    def __repr__(self):
+        return f"{self.frame}@{self.name}"
+
+
+class LabelArg:
+    """
+    Trieda reprezentujúca náveštie v skokovej inštrukcií
+
+    Argumenty:
+        label (str): náveštie
+    """
+
+    def __init__(self, label):
+        self.label = label
+
+    def __repr__(self):
+        return f"{self.label}"
