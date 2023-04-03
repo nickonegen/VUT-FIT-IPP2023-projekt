@@ -17,6 +17,20 @@ class Frame:
     def __init__(self):
         self._variables = {}
 
+    def __repr__(self):
+        if self.size() == 0:
+            return ""
+        return "\n".join([f"    {k} = {v}" for k, v in self._variables.items()]) + "\n"
+
+    def size(self):
+        """
+        Vráti počet premenných v rámci.
+
+        Vráti:
+            int: počet premenných v rámci
+        """
+        return len(self._variables)
+
     def has_variable(self, name):
         """
         Dotaz na existenciu premennej v rámci.
@@ -88,24 +102,11 @@ class Instruction:
     """
 
     def __init__(self, opcode, operands):
-        """
-        Inicializuje inštrukciu.
-
-        Argumenty:
-            opcode (str): kód inštrukcie
-            operands (Value|UnresolvedVariable): zoznam operandov
-        """
         self.opcode = opcode
         self.operands = operands
 
-    def __str__(self):
-        """
-        Vráti reprezentáciu inštrukcie ako reťazec.
-
-        Vráti:
-            str: reprezentácia inštrukcie
-        """
-        operands = ", ".join([str(operand) for operand in self.operands])
+    def __repr__(self):
+        operands = " ".join([str(operand) for operand in self.operands])
         return f"{self.opcode} {operands}"
 
     def replace_operand(self, index, value):
