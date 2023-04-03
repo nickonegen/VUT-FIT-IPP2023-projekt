@@ -2,6 +2,9 @@
 jexamxml.jar
 options
 
+# Python
+*.pyc
+
 # Testing
 test.**
 test**.txt
