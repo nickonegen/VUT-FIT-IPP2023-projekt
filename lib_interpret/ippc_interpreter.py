@@ -22,7 +22,7 @@ class Interpreter:
         labels (dict): slovník náveští
     """
 
-    def __init__(self, xml):
+    def __init__(self, xml, input):
         self.instructions = Queue()
         self.program_counter = 0
         self.frames = {"global": Frame(), "temporary": None}
@@ -31,6 +31,9 @@ class Interpreter:
         self.input_queue = Queue()
         self.labels = {}
         self.parse_xml(xml)
+
+        for line in input.splitlines():
+            self.input_queue.enqueue(line)
 
     def __repr__(self):
         repr_str = "#############################\n"
@@ -68,6 +71,14 @@ class Interpreter:
         return repr_str + "# END OF INTERPRETER DUMP #\n###########################"
 
     def parse_xml(self, xml_str):
+        """
+        Spracovanie XML reprezentácie programu.
+
+        Vyvolá:
+            ET.ParseError: chybný XML formát
+            KeyError: chybný XML obsah
+        """
+
         def parse_operand(arg_elm):
             arg_type = arg_elm.attrib["type"]
             if arg_type in ["int", "string", "bool", "float", "type", "nil"]:
@@ -87,7 +98,7 @@ class Interpreter:
         for instr_elm in xml:
             if instr_elm.tag == "instruction":
                 order = int(instr_elm.attrib["order"])
-                opcode = instr_elm.attrib["opcode"]
+                opcode = instr_elm.attrib["opcode"].upper()
 
                 operands = []
                 for arg_elm in instr_elm:
@@ -98,7 +109,120 @@ class Interpreter:
 
                         operands.append(parse_operand(arg_elm))
 
+                    if opcode == "LABEL":
+                        self.labels[operands[0].value] = order
+
                 temp_instructions[order] = Instruction(opcode, operands)
 
         for order in sorted(temp_instructions.keys()):
             self.instructions.enqueue(temp_instructions[order])
+
+    def peek_instruction(self):
+        """
+        Vráti inštrukciu na vrchu zoznamu.
+
+        Vráti:
+            Instruction: inštrukcia
+        """
+        return self.instructions.top()
+
+    def execute_next(self):
+        """
+        Vkoná jednu inštrukciu.
+
+        Vráti:
+            int: návratová hodnota (-1 = žiadna)
+
+        Vyvolá:
+            RuntimeError: sémantická chyba (ESEM)
+            AttributeError: chyba parametrov (EPARAM)
+            TypeError: chyba typu (EOTYPE)
+            KeyError: chyba prístupu do premennej (ENOVAR)
+            MemoryError: chyba rámca (ENOFRM)
+            ValueError: neplatná hodnota (EVALUE)
+            IndexError: neznáma hodnota (ENOVAL)
+            NameError: chyba reťazca (ESTR)
+            NotImplementedError: neimplementovaná inštrukcia
+            Exception: iná chyba (EINT)
+        """
+        if self.instructions.is_empty():
+            return -1
+
+        self.program_counter += 1
+        instr = self.instructions.dequeue()
+        instr_name = instr.opcode.upper()
+
+        def validate_operand(operand, expected_type):
+            if operand is None:
+                raise RuntimeError(f"Bad number of {instr_name} operands")
+
+            if isinstance(operand, Value):
+                if expected_type in ("value", "symb"):
+                    return True
+                if operand.type != expected_type:
+                    raise TypeError(
+                        f"{instr_name} expected {expected_type}, got {operand.type}"
+                    )
+                return True
+            if isinstance(operand, UnresolvedVariable):
+                if expected_type not in ("var", "symb"):
+                    raise TypeError(f"{instr_name} requires {expected_type}")
+                return True
+            if isinstance(operand, LabelArg):
+                if expected_type != "label":
+                    raise TypeError(f"{instr_name} requires {expected_type}")
+                return True
+            raise RuntimeError(f"{operand} is not a valid operand")
+
+        def resolve_symb(symb):
+            if isinstance(symb, Value):
+                return symb
+            if isinstance(symb, UnresolvedVariable):
+                frame = get_frame(symb.frame)
+                return frame.get_variable(symb.name)
+            raise RuntimeError(f"{symb} is not a valid symbol")
+
+        def check_opcount(expected_count):
+            if len(instr.operands) != expected_count:
+                raise RuntimeError(
+                    f"{instr_name} needs {expected_count} operands, got {len(instr.operands)}"
+                )
+
+        def get_frame(name):
+            match name.upper():
+                case "GF":
+                    return self.frames["global"]
+                case "TF":
+                    if self.frames["temporary"] is None:
+                        raise MemoryError("Attempted to access non-existent TF")
+                    return self.frames["temporary"]
+                case "LF":
+                    if self.frame_stack.is_empty():
+                        raise MemoryError("Attempted to access non-existent LF")
+                    return self.frame_stack.top()
+                case "_":
+                    raise AttributeError("Invalid frame name")
+
+        match instr.opcode:
+            case "DEFVAR":
+                check_opcount(1)
+                [var] = instr.operands
+                validate_operand(var, "var")
+                frame = get_frame(var.frame)
+                frame.define_variable(var.name)
+
+            case "READ":
+                check_opcount(2)
+                [target, type] = instr.operands
+                validate_operand(target, "var")
+                validate_operand(type, "type")
+                value = Value(type.value, self.input_queue.dequeue())
+                frame = get_frame(target.frame)
+                frame.set_variable(target.name, value)
+
+            case "WRITE":
+                check_opcount(1)
+                [value] = instr.operands
+                validate_operand(value, "symb")
+                value = resolve_symb(value)
+                print(str(value), end="")
