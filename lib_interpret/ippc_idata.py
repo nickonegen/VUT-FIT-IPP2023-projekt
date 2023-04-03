@@ -13,7 +13,14 @@ class Stack:
     """
 
     def __init__(self):
-        self._stack = []
+        self._items = []
+
+    def __repr__(self):
+        if self.is_empty():
+            return "  > (empty)\n"
+        return (
+            "  >  " + "\n     ".join(str(item) for item in reversed(self._items)) + "\n"
+        )
 
     def is_empty(self):
         """
@@ -22,7 +29,7 @@ class Stack:
         Vráti:
             bool: true, pokiaľ je zásobník prázdny, inak false
         """
-        return len(self._stack) == 0
+        return len(self._items) == 0
 
     def push(self, item):
         """
@@ -31,7 +38,7 @@ class Stack:
         Argumenty:
             item (any): položka na pridanie
         """
-        self._stack.append(item)
+        self._items.append(item)
 
     def pop(self):
         """
@@ -44,7 +51,7 @@ class Stack:
             RuntimeError: pokiaľ je zásobník prázdny
         """
         if not self.is_empty():
-            return self._stack.pop()
+            return self._items.pop()
         raise RuntimeError("Cannot access empty stack")
 
     def top(self):
@@ -58,8 +65,75 @@ class Stack:
             RuntimeError: pokiaľ je zásobník prázdny
         """
         if not self.is_empty():
-            return self._stack[-1]
+            return self._items[-1]
         raise RuntimeError("Cannot access empty stack")
+
+    def size(self):
+        """
+        Vráti počet položiek v zásobníku.
+
+        Vráti:
+            int: počet položiek v zásobníku
+        """
+        return len(self._items)
+
+
+class Queue:
+    """
+    Fronta pre inštrukcie a vstup.
+
+    Argumenty:
+        _queue (list): zoznam, ktorý reprezentuje frontu
+    """
+
+    def __init__(self):
+        self._items = []
+
+    def __repr__(self):
+        if self.is_empty():
+            return "  > (empty)\n"
+        return "  >  " + "\n     ".join(str(item) for item in self._items) + "\n"
+
+    def is_empty(self):
+        """
+        Dotaz na prázdnosť fronty.
+
+        Vráti:
+            bool: true, pokiaľ je fronta prázdna, inak false
+        """
+        return len(self._items) == 0
+
+    def enqueue(self, item):
+        """
+        Pridá položku na koniec fronty.
+
+        Argumenty:
+            item (any): položka na pridanie
+        """
+        self._items.append(item)
+
+    def dequeue(self):
+        """
+        Odoberie a vráti položku zo začiatku fronty.
+
+        Vráti:
+            any: položka zo začiatku fronty
+
+        Vyvolá:
+            RuntimeError: pokiaľ je fronta prázdna
+        """
+        if not self.is_empty():
+            return self._items.pop(0)
+        raise RuntimeError("Cannot access empty queue")
+
+    def size(self):
+        """
+        Vráti počet položiek v fronte.
+
+        Vráti:
+            int: počet položiek v fronte
+        """
+        return len(self._items)
 
 
 class Value:
@@ -75,8 +149,8 @@ class Value:
         self.type = value_type
         self.value = value
 
-    def __str__(self):
-        return f"{self.type}: {self.value}"
+    def __repr__(self):
+        return f"{self.type}@{self.value}"
 
 
 class UnresolvedVariable:
@@ -85,11 +159,13 @@ class UnresolvedVariable:
     počas interpretácie nahradená jej hodnotou.
 
     Argumenty:
-        frame (str): identifikátor rámca (GF, LF, TF)
-        name (str): názov premennej
+        varid (str): IPPcode23 premenná (formát xF@id)
     """
 
     def __init__(self, arg):
         self.frame, self.name = arg.split("@", maxsplit=1)
         if self.frame.upper() not in ("GF", "LF", "TF"):
             raise ValueError(f"Invalid variable name: {arg}")
+
+    def __repr__(self):
+        return f"{self.frame}@{self.name}"
