@@ -22,7 +22,7 @@ class Interpreter:
         labels (dict): slovník náveští
     """
 
-    def __init__(self, xml, input):
+    def __init__(self, xml, in_txt):
         self.instructions = Queue()
         self.program_counter = 0
         self.frames = {"global": Frame(), "temporary": None}
@@ -32,7 +32,7 @@ class Interpreter:
         self.labels = {}
         self.parse_xml(xml)
 
-        for line in input.splitlines():
+        for line in in_txt.splitlines():
             self.input_queue.enqueue(line)
 
     def __repr__(self):
@@ -213,10 +213,10 @@ class Interpreter:
 
             case "READ":
                 check_opcount(2)
-                [target, type] = instr.operands
+                [target, typeo] = instr.operands
                 validate_operand(target, "var")
-                validate_operand(type, "type")
-                value = Value(type.value, self.input_queue.dequeue())
+                validate_operand(typeo, "type")
+                value = Value(typeo.value, self.input_queue.dequeue())
                 frame = get_frame(target.frame)
                 frame.set_variable(target.name, value)
 
