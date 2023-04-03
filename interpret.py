@@ -5,7 +5,9 @@ Interprét XML reprezentácie programu v jazyku IPPcode23
 @author: Onegen Something <xonege99@vutbr.cz>
 """
 
-import sys, getopt
+import sys
+import getopt
+from lib_interpret.ippc_interpreter import Interpreter
 
 """
 Konštanty a globálne premenné
@@ -34,11 +36,11 @@ RETCODE = {
 }
 
 ginfo = {
-    "source": None,
-    "input": None,
-    "stats": False,
-    "verbose": False,
-    "fancy": False,
+    "source": None,  # Zdrojový súbor
+    "input": None,  # Vstupný súbor
+    "stats": False,  # Štatistiky (STATI, zatiaľ nepoužité)
+    "verbose": False,  # Rozšírený výpis
+    "fancy": False,  # Krajší výpis
 }
 
 """
@@ -89,22 +91,43 @@ def throw_err(ecode, msg, instr=None):
 Spúšťacie parametre
 """
 
+source_file = None
+input_file = None
+
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hvf", ["help", "source=", "input="])
-except getopt.GetoptError as err:
-    throw_err("EPARAM", str(err))
+except getopt.GetoptError as error:
+    throw_err("EPARAM", str(error))
     sys.exit(RETCODE.get("EPARAM"))
 
 for opt, arg in opts:
-    if opt in ("-h", "--help"):
+    if opt == "--help" or opt == "-h":
         print_help()
     elif opt == "--source":
-        ginfo["source"] = arg
+        source_file = arg
     elif opt == "--input":
-        ginfo["input"] = arg
+        input_file = arg
     elif opt == "-v":
         ginfo["verbose"] = True
     elif opt == "-f":
         ginfo["fancy"] = True
+
+if source_file is None and input_file is None:
+    throw_err("EPARAM", "--source or --input required")
+
+if source_file is None:
+    ginfo["source"] = sys.stdin.read()
+else:
+    with open(source_file, "r") as f:
+        ginfo["source"] = f.read()
+
+if input_file is None:
+    ginfo["input"] = sys.stdin.read()
+else:
+    with open(input_file, "r") as f:
+        ginfo["input"] = f.read()
+
+interpret = Interpreter(ginfo.get("source"))
+print(interpret)
 
 throw_err("EINT", "Not implemented yet")
