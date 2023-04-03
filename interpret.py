@@ -101,7 +101,7 @@ except getopt.GetoptError as error:
     sys.exit(RETCODE.get("EPARAM"))
 
 for opt, arg in opts:
-    if opt == "--help" or opt == "-h":
+    if opt in ("--help", "-h"):
         print_help()
     elif opt == "--source":
         source_file = arg
