@@ -20,7 +20,10 @@ class Frame:
     def __repr__(self):
         if self.size() == 0:
             return ""
-        return "\n".join([f"    {k} = {v}" for k, v in self._variables.items()]) + "\n"
+        return (
+            "\n".join([f"    {k} = {repr(v)}" for k, v in self._variables.items()])
+            + "\n"
+        )
 
     def size(self):
         """
@@ -60,21 +63,36 @@ class Frame:
             return self._variables[name]
         raise KeyError(f"Couldn't access non-existant variable {name}")
 
-    def define_variable(self, name, value):
+    def define_variable(self, name):
         """
         Definuje novú premennú v rámci.
+
+        Argumenty:
+            name (str): názov premennej
+
+        Vyvolá:
+            KeyError: pokiaľ sa premenná s daným názvom už nachádza v rámci
+        """
+        if not self.has_variable(name):
+            self._variables[name] = None
+        else:
+            raise KeyError(f"Redefinition of variable {name}")
+
+    def set_variable(self, name, value):
+        """
+        Nastaví hodnotu definovanej premennej.
 
         Argumenty:
             name (str): názov premennej
             value (Value): hodnota premennej
 
         Vyvolá:
-            KeyError: pokiaľ sa premenná s daným názvom už nachádza v rámci
+            KeyError: pokiaľ sa premenná nenachádza v rámci
         """
-        if not self.has_variable(name):
+        if self.has_variable(name):
             self._variables[name] = value
         else:
-            raise KeyError(f"Redefinition of variable {name}")
+            raise KeyError(f"Couldn't set non-existant variable {name}")
 
     def delete_variable(self, name):
         """
@@ -106,7 +124,7 @@ class Instruction:
         self.operands = operands
 
     def __repr__(self):
-        operands = " ".join([str(operand) for operand in self.operands])
+        operands = " ".join([repr(operand) for operand in self.operands])
         return f"{self.opcode} {operands}"
 
     def replace_operand(self, index, value):
@@ -140,12 +158,15 @@ class UnresolvedVariable:
 
     Argumenty:
         varid (str): IPPcode23 premenná (formát xF@id)
+
+    Vyvolá:
+        AttributeError: pokiaľ je formát argumentu neplatný
     """
 
     def __init__(self, arg):
         self.frame, self.name = arg.split("@", maxsplit=1)
         if self.frame.upper() not in ("GF", "LF", "TF"):
-            raise ValueError(f"Invalid variable name: {arg}")
+            raise AttributeError(f"Invalid variable name: {arg}")
 
     def __repr__(self):
         return f"{self.frame}@{self.name}"
