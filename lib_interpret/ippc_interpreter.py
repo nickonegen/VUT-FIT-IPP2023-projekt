@@ -29,7 +29,7 @@ class Interpreter:
     """
 
     def __init__(self, xml, in_txt):
-        self.instructions = Queue()
+        self.instructions = []
         self.program_counter = 0
         self.frames = {"global": Frame(), "temporary": None}
         self.frame_stack = Stack()
@@ -46,7 +46,7 @@ class Interpreter:
             "#############################",
             "# START OF INTERPRETER DUMP #",
             f"  Program counter: {self.program_counter}",
-            f"    All instructions: {self.program_counter + self.instructions.size()}",
+            f"    No. of instructions: {len(self.instructions)}",
             f"  Frame stack size: {self.frame_stack.size()}",
             f"    TF exists: {self.frames['temporary'] is not None}",
             f"  Data stack size: {self.data_stack.size()}",
@@ -54,18 +54,19 @@ class Interpreter:
             "",
             f"Global frame variables: ({self.frames['global'].size()})",
             f"{self.frames['global']}",
-            "",
             f"Data stack: ({self.data_stack.size()})",
             f"{self.data_stack}",
-            "",
             f"Input queue: ({self.input_queue.size()})",
             f"{self.input_queue}",
-            "",
             f"Labels: ({len(self.labels)})",
             *(f"    {k} = {v}" for k, v in self.labels.items()),
             "",
-            f"Instruction queue: ({self.instructions.size()})",
-            f"{self.instructions}",
+            f"Instructions: ({len(self.instructions)})",
+            *(
+                f"    {('> ' if index == self.program_counter - 1 else '  ')}{instruction}"
+                for index, instruction in enumerate(self.instructions)
+            ),
+            "",
             "# END OF INTERPRETER DUMP #",
             "###########################",
         ]
@@ -107,20 +108,24 @@ class Interpreter:
         if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
             raise KeyError("Invalid XML root element")
 
-        temp_instructions = dict((
+        temp_instructions = dict(
+            (
                 _parse_xml_element(instr_elm)
                 for instr_elm in xml
                 if instr_elm.tag == "instruction"
-            ))
+            )
+        )
 
         for order, instruction in sorted(temp_instructions.items()):
             if instruction.opcode == "LABEL":
                 self.labels[instruction.operands[0].name] = order
-            self.instructions.enqueue(instruction)
+            self.instructions.append(instruction)
 
     def peek_instruction(self):
-        """Vráti inštrukciu na vrchu zoznamu inštrukcií"""
-        return self.instructions.top()
+        """Vráti inštrukciu, ktorá bude spracovaná ďalšia"""
+        if len(self.instructions) <= self.program_counter:
+            return None
+        return self.instructions[self.program_counter]
 
     def get_frame(self, name):
         """Vráti dátový rámec podľa názvu"""
@@ -143,25 +148,29 @@ class Interpreter:
 
         def validate_operand(instr_name, operand, expected_type):
             if operand is None:
-                raise RuntimeError(f"Bad number of {instr_name} operands")
+                raise RuntimeError(f"Bad number of operands")
 
             if isinstance(operand, Value):
                 if expected_type in ("value", "symb"):
                     return True
                 if operand.type != expected_type:
                     raise TypeError(
-                        f"{instr_name} expected {expected_type}, got {operand.type}"
+                        f"Unexpected operand type, expected {expected_type}"
                     )
                 return True
             if isinstance(operand, UnresolvedVariable):
                 if expected_type not in ("var", "symb"):
-                    raise TypeError(f"{instr_name} requires {expected_type}")
+                    raise TypeError(
+                        f"Unexpected operand type, expected {expected_type}"
+                    )
                 return True
             if isinstance(operand, LabelArg):
                 if expected_type != "label":
-                    raise TypeError(f"{instr_name} requires {expected_type}")
+                    raise TypeError(
+                        f"Unexpected operand type, expected {expected_type}"
+                    )
                 return True
-            raise RuntimeError(f"{operand} is not a valid operand")
+            raise RuntimeError(f"Invalid operand {operand}")
 
         def resolve_symb(symb):
             if isinstance(symb, Value):
@@ -174,14 +183,13 @@ class Interpreter:
         def check_opcount(expected_count):
             if len(instr.operands) != expected_count:
                 raise RuntimeError(
-                    f"{instr_name} needs {expected_count} operands, got {len(instr.operands)}"
+                    f"{expected_count} operands required, got {len(instr.operands)}"
                 )
 
-        if self.instructions.is_empty():
-            return -1
+        if self.program_counter >= len(self.instructions):
+            return 0
 
-        self.program_counter += 1
-        instr = self.instructions.dequeue()
+        instr = self.instructions[self.program_counter]
         instr_name = instr.opcode.upper()
 
         def execute_DEFVAR():
@@ -218,6 +226,9 @@ class Interpreter:
 
         iexecute = opcode_impl.get(instr.opcode)
         if iexecute:
-            iexecute()
+            retcode = iexecute()
         else:
-            raise NotImplementedError(f"Unknown instruction: {instr.opcode}")
+            raise Exception(f"Unrecognised instruction")
+
+        self.program_counter += 1
+        return retcode
