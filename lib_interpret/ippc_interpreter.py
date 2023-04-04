@@ -42,123 +42,109 @@ class Interpreter:
             self.input_queue.enqueue(line)
 
     def __repr__(self):
-        repr_str = "#############################\n"
-        repr_str += "# START OF INTERPRETER DUMP #\n"
-        repr_str += f"  Program counter: {self.program_counter}\n"
-        repr_str += (
-            f"    All instructions: {self.program_counter + self.instructions.size()}\n"
-        )
-        repr_str += f"  Frame stack size: {self.frame_stack.size()}\n"
-        repr_str += f"    TF exists: {self.frames['temporary'] is not None}\n"
-        repr_str += f"  Data stack size: {self.data_stack.size()}\n"
-        repr_str += f"  Input queue size: {self.input_queue.size()}\n\n"
+        lines = [
+            "#############################",
+            "# START OF INTERPRETER DUMP #",
+            f"  Program counter: {self.program_counter}",
+            f"    All instructions: {self.program_counter + self.instructions.size()}",
+            f"  Frame stack size: {self.frame_stack.size()}",
+            f"    TF exists: {self.frames['temporary'] is not None}",
+            f"  Data stack size: {self.data_stack.size()}",
+            f"  Input queue size: {self.input_queue.size()}",
+            "",
+            f"Global frame variables: ({self.frames['global'].size()})",
+            f"{self.frames['global']}",
+            "",
+            f"Data stack: ({self.data_stack.size()})",
+            f"{self.data_stack}",
+            "",
+            f"Input queue: ({self.input_queue.size()})",
+            f"{self.input_queue}",
+            "",
+            f"Labels: ({len(self.labels)})",
+            *(f"    {k} = {v}" for k, v in self.labels.items()),
+            "",
+            f"Instruction queue: ({self.instructions.size()})",
+            f"{self.instructions}",
+            "# END OF INTERPRETER DUMP #",
+            "###########################",
+        ]
 
-        # Global frame
-        repr_str += f"Global frame variables: ({self.frames['global'].size()})\n"
-        repr_str += f"{self.frames['global']}\n"
-
-        # Data stack
-        repr_str += f"Data stack: ({self.data_stack.size()})\n"
-        repr_str += f"{self.data_stack}\n"
-
-        # Input queue
-        repr_str += f"Input queue: ({self.input_queue.size()})\n"
-        repr_str += f"{self.input_queue}\n"
-
-        # Labels
-        repr_str += f"Labels: ({len(self.labels)})\n"
-        repr_str += "\n".join([f"    {k} = {v}" for k, v in self.labels.items()]) + "\n"
-
-        # Instructions
-        repr_str += f"Instruction queue: ({self.instructions.size()})\n"
-        repr_str += f"{self.instructions}\n"
-
-        # End
-        return repr_str + "# END OF INTERPRETER DUMP #\n###########################"
+        return "\n".join(lines)
 
     def parse_xml(self, xml_str):
-        """
-        Spracovanie XML reprezentácie programu.
-
-        Vyvolá:
-            ET.ParseError: chybný XML formát
-            KeyError: chybný XML obsah
-        """
+        """Spracuje XML reprezentácie programu"""
 
         def parse_operand(arg_elm):
+            type_mapping = {
+                "int": lambda t, v: Value(t, v),
+                "string": lambda t, v: Value(t, v),
+                "bool": lambda t, v: Value(t, v),
+                "float": lambda t, v: Value(t, v),
+                "type": lambda t, v: Value(t, v),
+                "nil": lambda t, v: Value(t, v),
+                "var": lambda _, v: UnresolvedVariable(v),
+                "label": lambda _, v: LabelArg(v),
+            }
             arg_type = arg_elm.attrib["type"]
-            if arg_type in ["int", "string", "bool", "float", "type", "nil"]:
-                return Value(arg_type, arg_elm.text)
-            if arg_type == "var":
-                return UnresolvedVariable(arg_elm.text)
-            if arg_type == "label":
-                return LabelArg(arg_elm.text)
-            raise KeyError(f"Invalid argument type {arg_type}")
+            constructor = type_mapping.get(arg_type)
+            if constructor is None:
+                raise KeyError(f"Invalid argument type {arg_type}")
+            return constructor(arg_type, arg_elm.text)
 
-        temp_instructions = {}
+        def _parse_xml_element(instr_elm):
+            """Spracuje jeden element (inštrukciu) XML reprezentácie"""
+            order = int(instr_elm.attrib["order"])
+            opcode = instr_elm.attrib["opcode"].upper()
+            operands = [
+                parse_operand(arg_elm)
+                for arg_elm in instr_elm
+                if arg_elm.tag in ["arg1", "arg2", "arg3"]
+            ]
+            return order, Instruction(opcode, operands)
 
         xml = ET.fromstring(xml_str)  # skipcq: BAN-B314
         if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
             raise KeyError("Invalid XML root element")
 
-        for instr_elm in xml:
-            if instr_elm.tag == "instruction":
-                order = int(instr_elm.attrib["order"])
-                opcode = instr_elm.attrib["opcode"].upper()
+        temp_instructions = {
+            order: instruction
+            for order, instruction in (
+                _parse_xml_element(instr_elm)
+                for instr_elm in xml
+                if instr_elm.tag == "instruction"
+            )
+        }
 
-                operands = []
-                for arg_elm in instr_elm:
-                    if arg_elm.tag in ["arg1", "arg2", "arg3"]:
-                        arg_idx = int(arg_elm.tag[-1])
-                        if arg_idx > 3 or arg_idx < 1 or arg_idx != len(operands) + 1:
-                            raise KeyError(f"Invalid argument index {arg_idx}")
-
-                        operands.append(parse_operand(arg_elm))
-
-                    if opcode == "LABEL":
-                        self.labels[operands[0].name] = order
-
-                temp_instructions[order] = Instruction(opcode, operands)
-
-        for order in sorted(temp_instructions.keys()):
-            self.instructions.enqueue(temp_instructions[order])
+        for order, instruction in sorted(temp_instructions.items()):
+            if instruction.opcode == "LABEL":
+                self.labels[instruction.operands[0].name] = order
+            self.instructions.enqueue(instruction)
 
     def peek_instruction(self):
-        """
-        Vráti inštrukciu na vrchu zoznamu.
-
-        Vráti:
-            Instruction: inštrukcia
-        """
+        """Vráti inštrukciu na vrchu zoznamu inštrukcií"""
         return self.instructions.top()
 
+    def get_frame(self, name):
+        """Vráti dátový rámec podľa názvu"""
+        match name.upper():
+            case "GF":
+                return self.frames["global"]
+            case "TF":
+                if self.frames["temporary"] is None:
+                    raise MemoryError("Attempted to access non-existent TF")
+                return self.frames["temporary"]
+            case "LF":
+                if self.frame_stack.is_empty():
+                    raise MemoryError("Attempted to access non-existent LF")
+                return self.frame_stack.top()
+            case "_":
+                raise AttributeError("Invalid frame name")
+
     def execute_next(self):
-        """
-        Vkoná jednu inštrukciu.
+        """Vykoná jednu inštrukciu a vráti jej návratovú hodnotu (default 0)"""
 
-        Vráti:
-            int: návratová hodnota (-1 = žiadna)
-
-        Vyvolá:
-            RuntimeError: sémantická chyba (ESEM)
-            AttributeError: chyba parametrov (EPARAM)
-            TypeError: chyba typu (EOTYPE)
-            KeyError: chyba prístupu do premennej (ENOVAR)
-            MemoryError: chyba rámca (ENOFRM)
-            ValueError: neplatná hodnota (EVALUE)
-            IndexError: neznáma hodnota (ENOVAL)
-            NameError: chyba reťazca (ESTR)
-            NotImplementedError: neimplementovaná inštrukcia
-            Exception: iná chyba (EINT)
-        """
-        if self.instructions.is_empty():
-            return -1
-
-        self.program_counter += 1
-        instr = self.instructions.dequeue()
-        instr_name = instr.opcode.upper()
-
-        def validate_operand(operand, expected_type):
+        def validate_operand(instr_name, operand, expected_type):
             if operand is None:
                 raise RuntimeError(f"Bad number of {instr_name} operands")
 
@@ -184,7 +170,7 @@ class Interpreter:
             if isinstance(symb, Value):
                 return symb
             if isinstance(symb, UnresolvedVariable):
-                frame = get_frame(symb.frame)
+                frame = self.get_frame(symb.frame)
                 return frame.get_variable(symb.name)
             raise RuntimeError(f"{symb} is not a valid symbol")
 
@@ -194,41 +180,47 @@ class Interpreter:
                     f"{instr_name} needs {expected_count} operands, got {len(instr.operands)}"
                 )
 
-        def get_frame(name):
-            match name.upper():
-                case "GF":
-                    return self.frames["global"]
-                case "TF":
-                    if self.frames["temporary"] is None:
-                        raise MemoryError("Attempted to access non-existent TF")
-                    return self.frames["temporary"]
-                case "LF":
-                    if self.frame_stack.is_empty():
-                        raise MemoryError("Attempted to access non-existent LF")
-                    return self.frame_stack.top()
-                case "_":
-                    raise AttributeError("Invalid frame name")
+        if self.instructions.is_empty():
+            return -1
 
-        match instr.opcode:
-            case "DEFVAR":
-                check_opcount(1)
-                [var] = instr.operands
-                validate_operand(var, "var")
-                frame = get_frame(var.frame)
-                frame.define_variable(var.name)
+        self.program_counter += 1
+        instr = self.instructions.dequeue()
+        instr_name = instr.opcode.upper()
 
-            case "READ":
-                check_opcount(2)
-                [target, typeo] = instr.operands
-                validate_operand(target, "var")
-                validate_operand(typeo, "type")
-                value = Value(typeo.content, self.input_queue.dequeue())
-                frame = get_frame(target.frame)
-                frame.set_variable(target.name, value)
+        def execute_DEFVAR():
+            """DEFVAR var"""
+            check_opcount(1)
+            [var] = instr.operands
+            validate_operand(instr_name, var, "var")
+            frame = self.get_frame(var.frame)
+            frame.define_variable(var.name)
 
-            case "WRITE":
-                check_opcount(1)
-                [value] = instr.operands
-                validate_operand(value, "symb")
-                value = resolve_symb(value)
-                print(str(value), end="")
+        def execute_READ():
+            """READ targ ttype"""
+            check_opcount(2)
+            [targ, ttype] = instr.operands
+            validate_operand(instr_name, targ, "var")
+            validate_operand(instr_name, ttype, "type")
+            value = Value(ttype.content, self.input_queue.dequeue())
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, value)
+
+        def execute_WRITE():
+            """WRITE val"""
+            check_opcount(1)
+            [val] = instr.operands
+            validate_operand(instr_name, val, "symb")
+            val = resolve_symb(val)
+            print(str(val), end="")
+
+        opcode_impl = {
+            "DEFVAR": execute_DEFVAR,
+            "READ": execute_READ,
+            "WRITE": execute_WRITE,
+        }
+
+        iexecute = opcode_impl.get(instr.opcode)
+        if iexecute:
+            iexecute()
+        else:
+            raise NotImplementedError(f"Unknown instruction: {instr.opcode}")
