@@ -190,7 +190,6 @@ class Interpreter:
             return 0
 
         instr = self.instructions[self.program_counter]
-        instr_name = instr.opcode.upper()
 
         def execute_DEFVAR():
             """DEFVAR var"""
