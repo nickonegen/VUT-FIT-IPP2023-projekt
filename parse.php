@@ -43,7 +43,7 @@ define('VALID_OPTS', [
 /** @var \ArrayObject GINFO Globálny objekt pre kontroly a štatistiky */
 $GINFO = [
 	'header'	=> false,	// Prítomnosť hlavičky
-	'fancy'	=> false,	// Farebný výstup
+	'fancy'	=> true,	// Farebný výstup
 	'start'	=> microtime(true), // Čas spustenia
 	'stats'	=> false,	// Vlajka výpisu štatistík
 	'statsf'	=> '',	// Súbor pre výpis štatistík
