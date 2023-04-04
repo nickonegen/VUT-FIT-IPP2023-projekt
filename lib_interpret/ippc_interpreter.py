@@ -77,12 +77,12 @@ class Interpreter:
 
         def parse_operand(arg_elm):
             type_mapping = {
-                "int": lambda t, v: Value(t, v),
-                "string": lambda t, v: Value(t, v),
-                "bool": lambda t, v: Value(t, v),
-                "float": lambda t, v: Value(t, v),
-                "type": lambda t, v: Value(t, v),
-                "nil": lambda t, v: Value(t, v),
+                "int": Value,
+                "string": Value,
+                "bool": Value,
+                "float": Value,
+                "type": Value,
+                "nil": Value,
                 "var": lambda _, v: UnresolvedVariable(v),
                 "label": lambda _, v: LabelArg(v),
             }
