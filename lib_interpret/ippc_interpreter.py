@@ -146,7 +146,7 @@ class Interpreter:
     def execute_next(self):
         """Vykoná jednu inštrukciu a vráti jej návratovú hodnotu (default 0)"""
 
-        def validate_operand(instr_name, operand, expected_type):
+        def validate_operand(operand, expected_type):
             if operand is None:
                 raise RuntimeError(f"Bad number of operands")
 
@@ -196,7 +196,7 @@ class Interpreter:
             """DEFVAR var"""
             check_opcount(1)
             [var] = instr.operands
-            validate_operand(instr_name, var, "var")
+            validate_operand(var, "var")
             frame = self.get_frame(var.frame)
             frame.define_variable(var.name)
 
@@ -204,8 +204,8 @@ class Interpreter:
             """READ targ ttype"""
             check_opcount(2)
             [targ, ttype] = instr.operands
-            validate_operand(instr_name, targ, "var")
-            validate_operand(instr_name, ttype, "type")
+            validate_operand(targ, "var")
+            validate_operand(ttype, "type")
             value = Value(ttype.content, self.input_queue.dequeue())
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, value)
@@ -214,7 +214,7 @@ class Interpreter:
             """WRITE val"""
             check_opcount(1)
             [val] = instr.operands
-            validate_operand(instr_name, val, "symb")
+            validate_operand(val, "symb")
             val = resolve_symb(val)
             print(str(val), end="")
 
