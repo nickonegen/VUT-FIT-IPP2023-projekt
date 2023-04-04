@@ -148,7 +148,7 @@ class Interpreter:
 
         def validate_operand(operand, expected_type):
             if operand is None:
-                raise RuntimeError(f"Bad number of operands")
+                raise RuntimeError("Bad number of operands")
 
             if isinstance(operand, Value):
                 if expected_type in ("value", "symb"):
@@ -227,7 +227,7 @@ class Interpreter:
         if iexecute:
             retcode = iexecute()
         else:
-            raise Exception(f"Unrecognised instruction")
+            raise Exception("Unrecognised instruction")
 
         self.program_counter += 1
         return retcode
