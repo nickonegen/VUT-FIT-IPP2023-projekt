@@ -77,11 +77,12 @@ def throw_err(ecode, msg, instr=None):
     err_prefix = "\033[31;49;1mERR!\033[0m"
     code_label = "\033[35;49mcode\033[0m"
     instr_label = "\033[35;49minstr\033[0m"
+    err_msg = str(msg).replace('"', "").replace("'", "")
 
     err_str = f"{err_prefix} {code_label} {ecode}"
     if instr is not None:
         err_str += f"\n{err_prefix} {instr_label} {instr}"
-    err_str += f"\n{err_prefix} {msg}"
+    err_str += f"\n{err_prefix} {err_msg}"
 
     print(err_str, file=sys.stderr)
     sys.exit(RETCODE.get(ecode))
