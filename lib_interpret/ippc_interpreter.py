@@ -107,14 +107,11 @@ class Interpreter:
         if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
             raise KeyError("Invalid XML root element")
 
-        temp_instructions = {
-            order: instruction
-            for order, instruction in (
+        temp_instructions = dict((
                 _parse_xml_element(instr_elm)
                 for instr_elm in xml
                 if instr_elm.tag == "instruction"
-            )
-        }
+            ))
 
         for order, instruction in sorted(temp_instructions.items()):
             if instruction.opcode == "LABEL":
