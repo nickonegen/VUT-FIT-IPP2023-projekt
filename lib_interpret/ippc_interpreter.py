@@ -746,6 +746,8 @@ class Interpreter:
                     raise RuntimeError(f"Label {label.name} not found")
                 self.program_counter = self.labels[label.name]
 
+        opcode_impl["JUMPIFNEQ"] = execute_JUMPIFNEQ
+
         def execute_EXIT():
             """EXIT (symb)val"""
             check_opcount(1)
