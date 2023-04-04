@@ -102,7 +102,12 @@ class Value:
             case "int":
                 self.content = int(value_raw)
             case "bool":
-                self.content = bool(value_raw)
+                if str(value_raw).lower() == "true":
+                    self.content = True
+                elif str(value_raw).lower() == "false":
+                    self.content = False
+                else:
+                    raise ValueError(f"{value_raw} is not a valid bool")
             case "string":
                 self.content = str(value_raw)
             case "float":
@@ -115,6 +120,10 @@ class Value:
                 raise TypeError(f"Invalid value type: {value_type}")
 
     def __repr__(self):
+        if self.type == "nil":
+            return f"{self.type}@nil"
+        if self.type == "bool":
+            return f"{self.type}@{str(self.content).lower()}"
         return f"{self.type}@{self.content}"
 
     def __str__(self):
@@ -163,7 +172,7 @@ class LabelArg:
     """Trieda reprezentujúca náveštie v skokovej inštrukcií"""
 
     def __init__(self, label):
-        self.label = label
+        self.name = label
 
     def __repr__(self):
-        return f"{self.label}"
+        return f"{self.name}"
