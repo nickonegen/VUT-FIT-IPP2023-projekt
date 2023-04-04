@@ -121,29 +121,34 @@ class Interpreter:
                 self.labels[instruction.operands[0].name] = order
             self.instructions.append(instruction)
 
-    def peek_instruction(self):
+    def peek_instruction(self) -> Instruction | None:
         """Vráti inštrukciu, ktorá bude spracovaná ďalšia"""
         if len(self.instructions) <= self.program_counter:
             return None
         return self.instructions[self.program_counter]
 
-    def get_frame(self, name):
+    def get_frame(self, name) -> Frame:
         """Vráti dátový rámec podľa názvu"""
+        frame = None
         match name.upper():
             case "GF":
-                return self.frames["global"]
+                frame = self.frames["global"]
             case "TF":
-                if self.frames["temporary"] is None:
+                frame = self.frames["temporary"]
+                if frame is None:
                     raise MemoryError("Attempted to access non-existent TF")
-                return self.frames["temporary"]
             case "LF":
-                if self.frame_stack.is_empty():
+                frame = self.frame_stack.top()
+                if frame is None:
                     raise MemoryError("Attempted to access non-existent LF")
-                return self.frame_stack.top()
             case "_":
                 raise AttributeError("Invalid frame name")
 
-    def execute_next(self):
+        if frame is None:
+            raise AttributeError("Invalid frame name")
+        return frame
+
+    def execute_next(self) -> int:
         """Vykoná jednu inštrukciu a vráti jej návratovú hodnotu (default 0)"""
 
         def validate_operand(operand, expected_type):
@@ -230,4 +235,4 @@ class Interpreter:
             raise Exception("Unrecognised instruction")
 
         self.program_counter += 1
-        return retcode
+        return retcode or 0

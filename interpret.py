@@ -50,9 +50,9 @@ def parse_args():
         if opt in ("--help", "-h"):
             print_help()
         elif opt == "--source":
-            arguments["source"] = arg
+            arguments["source"] = arg  # type: ignore
         elif opt == "--input":
-            arguments["input"] = arg
+            arguments["input"] = arg  # type: ignore
 
     if arguments["source"] is None and arguments["input"] is None:
         throw_err("EPARAM", "--source or --input required")
@@ -115,7 +115,7 @@ def main():
         try:
             returncode = interpret.execute_next()
         except Exception as error:  # skipcq: PYL-W0703 - catch all exceptions
-            error_code = IEXCEPTIONC.get(type(error), "EINT")
+            error_code = IEXCEPTIONC.get(type(error), "EINT")  # type: ignore
             throw_err(error_code, str(error), next_instruction)
 
     # DEBUG OUTPUT
