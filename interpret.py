@@ -50,9 +50,9 @@ def parse_args():
         if opt == "-d":
             arguments["debug_print"] = True
         elif opt == "--source":
-            arguments["source"] = arg  # type: ignore
+            arguments["source"] = arg
         elif opt == "--input":
-            arguments["input"] = arg  # type: ignore
+            arguments["input"] = arg
 
     if arguments["source"] is None and arguments["input"] is None:
         throw_err("EPARAM", "--source or --input required")
@@ -124,7 +124,7 @@ def main():
         except KeyboardInterrupt:
             throw_err("EINT", "Interrupted by user")
         except Exception as error:  # skipcq: PYL-W0703 - catch all exceptions
-            error_code = IEXCEPTIONC.get(type(error), "EINT")  # type: ignore
+            error_code = IEXCEPTIONC.get(type(error), "EINT")
             throw_err(error_code, str(error), next_instruction)
 
     sys.exit(returncode)
