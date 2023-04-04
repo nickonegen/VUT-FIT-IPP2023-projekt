@@ -6,8 +6,11 @@ options
 *.pyc
 
 # Testing
+tests
 test.**
 test**.txt
+testres.html
+ipp-2023-tests
 testanlys.sh
 testanlys.out
 
