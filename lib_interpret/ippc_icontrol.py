@@ -3,6 +3,8 @@ Triedy pre ovládanie toku interprétu jazyka IPPcode23.
 @author: Onegen Something <xonege99@vutbr.cz>
 """
 
+import re
+
 
 class Frame:
     """Trieda reprezentujúca dátový rámec združujúci premenné"""
@@ -117,6 +119,17 @@ class Value:
 
     def __str__(self):
         match self.type:
+            case "string":
+                pattern = re.compile(r"\\(\d{3})")
+
+                def decode_esc(match):
+                    char_code = int(match.group(1), 10)
+                    return chr(char_code)
+
+                try:
+                    return pattern.sub(decode_esc, str(self.content))
+                except ValueError:
+                    raise NameError(f"Invalid escape sequence: {self.content}")
             case "bool":
                 return str(self.content).lower()
             case "nil":
