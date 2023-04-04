@@ -29,13 +29,14 @@ class Interpreter:
     """
 
     def __init__(self, xml, in_txt):
-        self.instructions = []
-        self.program_counter = 0
+        self.instructions: list[Instruction] = []
+        self.program_counter: int = 0
         self.frames = {"global": Frame(), "temporary": None}
         self.frame_stack = Stack()
         self.data_stack = Stack()
         self.input_queue = Queue()
-        self.labels = {}
+        self.labels: dict[str, int] = {}
+        self._verbose = False
         self.parse_xml(xml)
 
         for line in in_txt.splitlines():
@@ -63,7 +64,7 @@ class Interpreter:
             "",
             f"Instructions: ({len(self.instructions)})",
             *(
-                f"    {('> ' if index == self.program_counter - 1 else '  ')}{instruction}"
+                f"    {('> ' if index == self.program_counter else '  ')}{instruction}"
                 for index, instruction in enumerate(self.instructions)
             ),
             "",
@@ -73,10 +74,10 @@ class Interpreter:
 
         return "\n".join(lines)
 
-    def parse_xml(self, xml_str):
+    def parse_xml(self, xml_str: str):
         """Spracuje XML reprezentácie programu"""
 
-        def parse_operand(arg_elm):
+        def parse_operand(arg_elm: ET.Element) -> Value | UnresolvedVariable | LabelArg:
             type_mapping = {
                 "int": Value,
                 "string": Value,
@@ -93,7 +94,7 @@ class Interpreter:
                 raise KeyError(f"Invalid argument type {arg_type}")
             return constructor(arg_type, arg_elm.text)
 
-        def _parse_xml_element(instr_elm):
+        def _parse_xml_element(instr_elm: ET.Element) -> tuple[int, Instruction]:
             """Spracuje jeden element (inštrukciu) XML reprezentácie"""
             order = int(instr_elm.attrib["order"])
             opcode = instr_elm.attrib["opcode"].upper()
@@ -127,7 +128,11 @@ class Interpreter:
             return None
         return self.instructions[self.program_counter]
 
-    def get_frame(self, name) -> Frame:
+    def make_verbose(self):
+        """Zapne výpisovanie všetkých inštrukcií"""
+        self._verbose = True
+
+    def get_frame(self, name: str) -> Frame:
         """Vráti dátový rámec podľa názvu"""
         frame = None
         match name.upper():
@@ -151,7 +156,7 @@ class Interpreter:
     def execute_next(self) -> int:
         """Vykoná jednu inštrukciu a vráti jej návratovú hodnotu (default 0)"""
 
-        def validate_operand(operand, expected_type):
+        def validate_operand(operand, expected_type: str) -> bool:
             if operand is None:
                 raise RuntimeError("Bad number of operands")
 
@@ -177,7 +182,7 @@ class Interpreter:
                 return True
             raise RuntimeError(f"Invalid operand {operand}")
 
-        def resolve_symb(symb):
+        def resolve_symb(symb: Value | UnresolvedVariable) -> Value:
             if isinstance(symb, Value):
                 return symb
             if isinstance(symb, UnresolvedVariable):
@@ -185,27 +190,83 @@ class Interpreter:
                 return frame.get_variable(symb.name)
             raise RuntimeError(f"{symb} is not a valid symbol")
 
-        def check_opcount(expected_count):
+        def check_opcount(expected_count: int) -> bool:
             if len(instr.operands) != expected_count:
                 raise RuntimeError(
                     f"{expected_count} operands required, got {len(instr.operands)}"
                 )
+            return True
 
         if self.program_counter >= len(self.instructions):
             return 0
 
-        instr = self.instructions[self.program_counter]
+        instr: Instruction = self.instructions[self.program_counter]
+
+        if self._verbose:
+            print(f"  \033[30m{instr}\033[0m")
+
+        opcode_impl = {}
+
+        def execute_MOVE():
+            """MOVE (var)targ (symb)val"""
+            check_opcount(2)
+            [targ, val] = instr.operands
+            validate_operand(targ, "var")
+            validate_operand(val, "symb")
+            val = resolve_symb(val)
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, val)
+            if self._verbose:
+                print(
+                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{val}\033[0m"
+                )
+
+        opcode_impl["MOVE"] = execute_MOVE
+
+        def execute_CREATEFRAME():
+            """CREATEFRAME"""
+            check_opcount(0)
+            if self.frames.get("temporary") is not None:
+                del self.frames["temporary"]
+            self.frames["temporary"] = Frame()
+
+        opcode_impl["CREATEFRAME"] = execute_CREATEFRAME
+
+        def execute_PUSHFRAME():
+            """PUSHFRAME"""
+            check_opcount(0)
+            if self.frames["temporary"] is None:
+                raise MemoryError("Attempted to push non-existent TF")
+            self.frame_stack.push(self.frames["temporary"])
+            del self.frames["temporary"]
+
+        opcode_impl["PUSHFRAME"] = execute_PUSHFRAME
+
+        def execute_POPFRAME():
+            """POPFRAME"""
+            check_opcount(0)
+            if self.frame_stack.is_empty():
+                raise MemoryError("Attempted to pop non-existent LF")
+            self.frames["temporary"] = self.frame_stack.pop()
+
+        opcode_impl["POPFRAME"] = execute_POPFRAME
 
         def execute_DEFVAR():
-            """DEFVAR var"""
+            """DEFVAR (var)var"""
             check_opcount(1)
             [var] = instr.operands
             validate_operand(var, "var")
             frame = self.get_frame(var.frame)
             frame.define_variable(var.name)
+            if self._verbose:
+                print(
+                    f"    \033[32m{var.frame}@\033[0m{var.name} = \033[33mdefined\033[0m"
+                )
+
+        opcode_impl["DEFVAR"] = execute_DEFVAR
 
         def execute_READ():
-            """READ targ ttype"""
+            """READ (var)targ (type)ttype"""
             check_opcount(2)
             [targ, ttype] = instr.operands
             validate_operand(targ, "var")
@@ -213,20 +274,22 @@ class Interpreter:
             value = Value(ttype.content, self.input_queue.dequeue())
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, value)
+            if self._verbose:
+                print(
+                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{value}\033[0m"
+                )
+
+        opcode_impl["READ"] = execute_READ
 
         def execute_WRITE():
-            """WRITE val"""
+            """WRITE (symb)val"""
             check_opcount(1)
             [val] = instr.operands
             validate_operand(val, "symb")
             val = resolve_symb(val)
             print(str(val), end="")
 
-        opcode_impl = {
-            "DEFVAR": execute_DEFVAR,
-            "READ": execute_READ,
-            "WRITE": execute_WRITE,
-        }
+        opcode_impl["WRITE"] = execute_WRITE
 
         iexecute = opcode_impl.get(instr.opcode)
         if iexecute:
