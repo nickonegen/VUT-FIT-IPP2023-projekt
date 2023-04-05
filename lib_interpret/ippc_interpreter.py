@@ -204,7 +204,7 @@ class Interpreter:
                 frame = self.get_frame(symb.frame)
                 result = frame.get_variable(symb.name)
             if result is None:
-                raise RuntimeError(f"{symb} is not a valid defined symbol")
+                raise IndexError(f"{symb} is not a valid defined symbol")
             validate_operand(result, expected_type)
             return result
 
@@ -221,7 +221,7 @@ class Interpreter:
         instr: Instruction = self.instructions[self.program_counter]
 
         if self._verbose:
-            print(f"  \033[30m{instr}\033[0m")
+            print(f"  \033[90m{instr}\033[0m")
 
         opcode_impl = {}
 
@@ -337,13 +337,17 @@ class Interpreter:
         def execute_ADD():
             """ADD (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "int")
-            val2 = resolve_symb(val2, "int")
-            result = Value("int", val1.content + val2.content)
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
+                raise TypeError("Unexpected operand type, expected int or float")
+            if val1.type != val2.type:
+                raise TypeError("Operand types must be equal for ADD operation")
+            rtype = val1.type
+            result_cont = val1.content + val2.content
+            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
             if self._verbose:
@@ -356,13 +360,17 @@ class Interpreter:
         def execute_SUB():
             """SUB (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "int")
-            val2 = resolve_symb(val2, "int")
-            result = Value("int", val1.content - val2.content)
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
+                raise TypeError("Unexpected operand type, expected int or float")
+            if val1.type != val2.type:
+                raise TypeError("Operand types must be equal for ADD operation")
+            rtype = val1.type
+            result_cont = val1.content - val2.content
+            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
             if self._verbose:
@@ -375,13 +383,17 @@ class Interpreter:
         def execute_MUL():
             """MUL (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "int")
-            val2 = resolve_symb(val2, "int")
-            result = Value("int", val1.content * val2.content)
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
+                raise TypeError("Unexpected operand type, expected int or float")
+            if val1.type != val2.type:
+                raise TypeError("Operand types must be equal for ADD operation")
+            rtype = val1.type
+            result_cont = val1.content * val2.content
+            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
             if self._verbose:
@@ -392,17 +404,21 @@ class Interpreter:
         opcode_impl["MUL"] = execute_MUL
 
         def execute_IDIV():
-            """idiv (var)targ (symb)val1 (symb)val2"""
+            """IDIV (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "int")
-            val2 = resolve_symb(val2, "int")
-            if val2.content == 0:
-                raise ValueError("division by zero")
-            result = Value("int", val1.content // val2.content)
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
+                raise TypeError("Unexpected operand type, expected int or float")
+            if val1.type != val2.type:
+                raise TypeError("Operand types must be equal for ADD operation")
+            if float(val2.content) == 0.0:
+                raise ValueError("Division by zero")
+            rtype = val1.type
+            result_cont = val1.content // val2.content
+            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
             if self._verbose:
@@ -411,6 +427,28 @@ class Interpreter:
                 )
 
         opcode_impl["IDIV"] = execute_IDIV
+
+        def execute_DIV():
+            """DIV (var)targ (symb)val1 (symb)val2"""
+            check_opcount(3)
+            targ, val1, val2 = instr.operands
+            validate_operand(targ, "var")
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
+                raise TypeError("Unexpected operand type, expected int or float")
+            if val1.type != val2.type:
+                raise TypeError("Operand types must be equal for ADD operation")
+            if float(val2.content) == 0.0:
+                raise ValueError("Division by zero")
+            result = Value("float", float(val1.content / val2.content).hex())
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, result)
+            if self._verbose:
+                print(
+                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
+                )
+
+        opcode_impl["DIV"] = execute_DIV
 
         def execute_LT():
             """LT (var)targ (symb)val1 (symb)val2"""
@@ -571,6 +609,38 @@ class Interpreter:
                 )
 
         opcode_impl["STRI2INT"] = execute_STRI2INT
+
+        def execute_INT2FLOAT():
+            """INT2FLOAT (var)targ (symb)val"""
+            check_opcount(2)
+            targ, val = instr.operands
+            validate_operand(targ, "var")
+            val = resolve_symb(val, "int")
+            result = Value("float", float(val.content).hex())
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, result)
+            if self._verbose:
+                print(
+                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
+                )
+
+        opcode_impl["INT2FLOAT"] = execute_INT2FLOAT
+
+        def execute_FLOAT2INT():
+            """FLOAT2INT (var)targ (symb)val"""
+            check_opcount(2)
+            targ, val = instr.operands
+            validate_operand(targ, "var")
+            val = resolve_symb(val, "float")
+            result = Value("int", int(val.content))
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, result)
+            if self._verbose:
+                print(
+                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
+                )
+
+        opcode_impl["FLOAT2INT"] = execute_FLOAT2INT
 
         def execute_READ():
             """READ (var)targ (type)ttype"""
