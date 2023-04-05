@@ -96,7 +96,11 @@ class Interpreter:
                 raise KeyError(f"Invalid argument type {arg_type}")
             return constructor(arg_type, arg_elm.text)
 
-        def _parse_xml_element(instr_elm: ET.Element) -> tuple[int, Instruction]:
+        def validate_xml_root(xml: ET.Element) -> None:
+            if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
+                raise KeyError("Invalid XML root element")
+
+        def parse_xml_element(instr_elm: ET.Element) -> tuple[int, Instruction]:
             """Spracuje jeden element (inštrukciu) XML reprezentácie"""
             if instr_elm.tag != "instruction":
                 raise KeyError(f"Unexpected element: {instr_elm.tag}")
@@ -112,17 +116,19 @@ class Interpreter:
 
             if len(operands_dict) != len(instr_elm):
                 raise KeyError("Duplicate or missing arguments")
+            for i in range(1, len(operands_dict) + 1):
+                if i not in operands_dict:
+                    raise KeyError(f"Missing argument {i}")
 
             operands = [operands_dict[i] for i in sorted(operands_dict)]
             return order, Instruction(opcode, operands)
 
         xml = ET.fromstring(xml_str)  # skipcq: BAN-B314
-        if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
-            raise KeyError("Invalid XML root element")
+        validate_xml_root(xml)
 
         temp_instructions = {}
         for instr_elm in xml:
-            order, instruction = _parse_xml_element(instr_elm)
+            order, instruction = parse_xml_element(instr_elm)
             if order in temp_instructions:
                 raise KeyError(f"Duplicate instruction order {order}")
             temp_instructions[order] = instruction
@@ -130,9 +136,10 @@ class Interpreter:
         for order, instruction in sorted(temp_instructions.items()):
             self.instructions.append(instruction)
             if instruction.opcode == "LABEL":
-                if instruction.operands[0].name in self.labels:
-                    raise KeyError(f"Duplicate label {instruction.operands[0].name}")
-                self.labels[instruction.operands[0].name] = len(self.instructions) - 1
+                label_name = instruction.operands[0].name
+                if label_name in self.labels:
+                    raise KeyError(f"Duplicate label {label_name}")
+                self.labels[label_name] = len(self.instructions) - 1
 
     def peek_instruction(self) -> Instruction | None:
         """Vráti inštrukciu, ktorá bude spracovaná ďalšia"""
@@ -648,7 +655,11 @@ class Interpreter:
             [targ, ttype] = instr.operands
             validate_operand(targ, "var")
             validate_operand(ttype, "type")
-            value = Value(ttype.content, self.input_queue.dequeue())
+            value = None
+            if self.input_queue.is_empty():
+                value = Value("nil", None)
+            else:
+                value = Value(ttype.content, self.input_queue.dequeue())
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, value)
             if self._verbose:
@@ -756,7 +767,7 @@ class Interpreter:
             try:
                 val = resolve_symb(val)
                 result = Value("string", val.type)
-            except RuntimeError:
+            except IndexError:
                 val = Value("nil", None)
                 result = Value("string", "")
             frame = self.get_frame(targ.frame)
