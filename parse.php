@@ -10,7 +10,9 @@
 
 ini_set('display_errors', 'stderr');
 
+
 include 'lib_parse/ippc_parser.php';
+
 
 /** @var \ArrayObject RETCODE Návratový kód */
 define('RETCODE', [
@@ -27,6 +29,7 @@ define('RETCODE', [
 /** @var \ArrayObject VALID_OPTS Zoznam rozpoznávaných parametrov */
 define('VALID_OPTS', [
 	'help'		=> 'no',
+	'fancier'		=> 'no',
 	'stats'		=> 'req',
 	'loc'		=> 'no',
 	'comments'	=> 'no',
@@ -43,7 +46,8 @@ define('VALID_OPTS', [
 /** @var \ArrayObject GINFO Globálny objekt pre kontroly a štatistiky */
 $GINFO = [
 	'header'	=> false,	// Prítomnosť hlavičky
-	'fancy'	=> true,	// Farebný výstup
+	'fancy'	=> false,	// Farebný výstup
+	'legacy'	=> false,	// Zakáže IPPcode23 rozšírenia STACK a FLOAT
 	'start'	=> microtime(true), // Čas spustenia
 	'stats'	=> false,	// Vlajka výpisu štatistík
 	'statsf'	=> '',	// Súbor pre výpis štatistík
@@ -72,6 +76,8 @@ if (array_search('--help', $argv)) {
 	echo " no syntax or lexical errors are found.\n";
 	echo "\n";
 	echo "  --help              Print this help message and exit.\n";
+	echo "  --legacy            Parse only unextended IPPcode23.\n";
+	echo "  --fancier           Format --stats and use colourful errors.\n";
 	echo "  --stats=FILE        Write statistics to the given file.\n";
 	echo "\n";
 	echo " \033[1mStats Options\033[0m \033[3m(appends to --stats=FILE)\033[0m\n";
@@ -107,7 +113,19 @@ foreach ($argv as $arg) {
 		throw_err('EPARAM', null, "Option --$opt doesn't take a value");
 	}
 
-	// Všetky parametre mimo --help sú štatistické => --stats musí byť prvý
+	// --fancier
+	if ($opt == 'fancier') {
+		$GINFO['fancy'] = true;
+		continue;
+	}
+
+	// --legacy
+	if ($opt == 'legacy') {
+		$GINFO['legacy'] = true;
+		continue;
+	}
+
+	// Ostatné parametre sú štatistické => --stats musí byť pred nimi
 	if ($opt == 'stats') {
 		// --stats nemôže byť 2x
 		if ($GINFO['stats']) {
@@ -149,6 +167,7 @@ $GINFO['header'] ||
 if ($GINFO['stats']) {
 	$fancy = $GINFO['fancy'];
 	$stat_file = fopen($GINFO['statf'], 'w');
+
 	if (!$stat_file) {
 		throw_err('EWRITE', null, "Can't open file {$GINFO['statf']}");
 	}
@@ -162,7 +181,9 @@ if ($GINFO['stats']) {
 echo ippcXML_asXML(true);
 exit(RETCODE['OK']);
 
+
 /* Pomocné funkcie */
+
 
 /**
  * Vyhodenie chyby a ukončenie programu.

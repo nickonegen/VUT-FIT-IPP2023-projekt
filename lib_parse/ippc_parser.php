@@ -5,8 +5,13 @@
  * @author Onegen Something <xonege99@vutbr.cz>
  */
 
+
 include 'ippc_to_xml.php';
 include 'ippc_stats.php';
+
+
+/* Konštanty a výčty */
+
 
 /** @var \ArrayObject DTYPE Výčet dátových typov */
 define('DTYPE', [
@@ -30,164 +35,206 @@ define('INSTR', [
 	// Inštrukcie programových rámcov
 	'MOVE' => [
 		'id'		=> 1,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'CREATEFRAME' => [
 		'id'		=> 2,
+		'ext'	=> false,
 		'argt'	=> [],
 	],
 	'PUSHFRAME' => [
 		'id'		=> 3,
+		'ext'	=> false,
 		'argt'	=> [],
 	],
 	'POPFRAME' => [
 		'id'		=> 4,
+		'ext'	=> false,
 		'argt'	=> [],
 	],
 	'DEFVAR' => [
 		'id'		=> 5,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var']],
 	],
 	'CALL' => [
 		'id'		=> 6,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['label']],
 	],
 	'RETURN' => [
 		'id'		=> 7,
+		'ext'	=> false,
 		'argt'	=> [],
 	],
 	// Inštrukcie dátového zásobníka
 	'PUSHS' => [
 		'id'		=> 8,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['symb']],
 	],
 	'POPS' => [
 		'id'		=> 9,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var']],
 	],
 	// Aritmetické a dátové inštrukcie
 	'ADD' => [
 		'id'		=> 10,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'SUB' => [
 		'id'		=> 11,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'MUL' => [
 		'id'		=> 12,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'IDIV' => [
 		'id'		=> 13,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'DIV' => [
 		'id'		=> 14,
+		'ext'	=> true,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'LT' => [
 		'id'		=> 15,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'GT' => [
 		'id'		=> 16,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'EQ' => [
 		'id'		=> 17,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'AND' => [
 		'id'		=> 18,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'OR' => [
 		'id'		=> 19,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'NOT' => [
 		'id'		=> 20,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'INT2CHAR' => [
 		'id'		=> 21,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'STRI2INT' => [
 		'id'		=> 22,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'INT2FLOAT' => [
 		'id'		=> 23,
+		'ext'	=> true,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'FLOAT2INT' => [
 		'id'		=> 24,
+		'ext'	=> true,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	// Vstupno-výstupné inštrukcie
 	'READ' => [
 		'id'		=> 25,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['type']],
 	],
 	'WRITE' => [
 		'id'		=> 26,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie reťazcov
 	'CONCAT' => [
 		'id'		=> 27,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'STRLEN' => [
 		'id'		=> 28,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'GETCHAR' => [
 		'id'		=> 29,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'SETCHAR' => [
 		'id'		=> 30,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	// Inštrukcie typu
 	'TYPE' => [
 		'id'		=> 31,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	// Inštrukcie riadenia toku programu
 	'LABEL' => [
 		'id'		=> 32,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['label']],
 	],
 	'JUMP' => [
 		'id'		=> 33,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['label']],
 	],
 	'JUMPIFEQ' => [
 		'id'		=> 34,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'JUMPIFNEQ' => [
 		'id'		=> 35,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'EXIT' => [
 		'id'		=> 36,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie na ladenie
 	'DPRINT' => [
 		'id'		=> 37,
+		'ext'	=> false,
 		'argt'	=> [OPERAND['symb']],
 	],
 	'BREAK' => [
 		'id'		=> 38,
+		'ext'	=> false,
 		'argt'	=> [],
 	],
 ]);
+
+
+/* Funkcie */
+
 
 /**
  * Pomocná funkcia analyzátora odstraňujúca komentáre,
@@ -257,6 +304,9 @@ function ippc_parse_line(string $line): void {
 	$instr_id =
 		INSTR[$instr] ??
 		throw_err('EOPCODE', $GINFO['lines'], "Unknown instruction $instr");
+	if ($instr_id['ext'] && $GINFO['legacy']) {
+		throw_err('EOPCODE', $GINFO['lines'], "Instruction $instr not allowed in legacy mode");
+	}
 
 	// XML element inštrukcie
 	$instr_xml = ippcXML_add_instruction($instr);
@@ -453,6 +503,10 @@ function ippc_is_identifier(string $op): bool {
 		$op,
 	);
 }
+
+
+/* Pomocné funkcie */
+
 
 /**
  * Kontrola, či je daný operand rámec (GF, LF, TF).
