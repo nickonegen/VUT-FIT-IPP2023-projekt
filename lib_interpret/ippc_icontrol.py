@@ -111,7 +111,7 @@ class Value:
             case "string":
                 self.content = str(value_raw)
             case "float":
-                self.content = float(value_raw)
+                self.content = float.fromhex(value_raw)
             case "type":
                 self.content = str(value_raw)
             case "nil":
@@ -124,6 +124,8 @@ class Value:
             return f"{self.type}@nil"
         if self.type == "bool":
             return f"{self.type}@{str(self.content).lower()}"
+        if self.type == "float":
+            return f"{self.type}@{self.content.hex()}"
         return f"{self.type}@{self.content}"
 
     def __str__(self):
@@ -139,6 +141,8 @@ class Value:
                     return pattern.sub(decode_esc, str(self.content))
                 except ValueError:
                     raise NameError(f"Invalid escape sequence: {self.content}")
+            case "float":
+                return str(self.content.hex())
             case "bool":
                 return str(self.content).lower()
             case "nil":
