@@ -14,6 +14,7 @@ define('DTYPE', [
 	'bool'	=> 1,
 	'string'	=> 2,
 	'nil'	=> 3,
+	'float'	=> 4,
 ]);
 
 /** @var \ArrayObject OPERAND Výčet operandov */
@@ -81,97 +82,109 @@ define('INSTR', [
 		'id'		=> 13,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'LT' => [
+	'DIV' => [
 		'id'		=> 14,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'GT' => [
+	'LT' => [
 		'id'		=> 15,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'EQ' => [
+	'GT' => [
 		'id'		=> 16,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'AND' => [
+	'EQ' => [
 		'id'		=> 17,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'OR' => [
+	'AND' => [
 		'id'		=> 18,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'NOT' => [
+	'OR' => [
 		'id'		=> 19,
-		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'INT2CHAR' => [
+	'NOT' => [
 		'id'		=> 20,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
-	'STRI2INT' => [
+	'INT2CHAR' => [
 		'id'		=> 21,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+	],
+	'STRI2INT' => [
+		'id'		=> 22,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+	],
+	'INT2FLOAT' => [
+		'id'		=> 23,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+	],
+	'FLOAT2INT' => [
+		'id'		=> 24,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	// Vstupno-výstupné inštrukcie
 	'READ' => [
-		'id'		=> 22,
+		'id'		=> 25,
 		'argt'	=> [OPERAND['var'], OPERAND['type']],
 	],
 	'WRITE' => [
-		'id'		=> 23,
+		'id'		=> 26,
 		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie reťazcov
 	'CONCAT' => [
-		'id'		=> 24,
+		'id'		=> 27,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'STRLEN' => [
-		'id'		=> 25,
+		'id'		=> 28,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'GETCHAR' => [
-		'id'		=> 26,
+		'id'		=> 29,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'SETCHAR' => [
-		'id'		=> 27,
+		'id'		=> 30,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	// Inštrukcie typu
 	'TYPE' => [
-		'id'		=> 28,
+		'id'		=> 31,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	// Inštrukcie riadenia toku programu
 	'LABEL' => [
-		'id'		=> 29,
+		'id'		=> 32,
 		'argt'	=> [OPERAND['label']],
 	],
 	'JUMP' => [
-		'id'		=> 30,
+		'id'		=> 33,
 		'argt'	=> [OPERAND['label']],
 	],
 	'JUMPIFEQ' => [
-		'id'		=> 31,
+		'id'		=> 34,
 		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'JUMPIFNEQ' => [
-		'id'		=> 32,
+		'id'		=> 35,
 		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'EXIT' => [
-		'id'		=> 33,
+		'id'		=> 36,
 		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie na ladenie
 	'DPRINT' => [
-		'id'		=> 34,
+		'id'		=> 37,
 		'argt'	=> [OPERAND['symb']],
 	],
 	'BREAK' => [
-		'id'		=> 35,
+		'id'		=> 38,
 		'argt'	=> [],
 	],
 ]);
@@ -410,6 +423,11 @@ function ippc_parse_const(string $op, SimpleXMLElement $arg_xml): bool {
 			break;
 		case DTYPE['nil']:
 			if ($const_val != 'nil') {
+				return false;
+			}
+			break;
+		case DTYPE['float']:
+			if (!preg_match_all('/^[+-]?0x[0-9a-fA-F]+(\.[0-9a-fA-F]+)?p[+-]?[0-9]+$/', $const_val)) {
 				return false;
 			}
 			break;
