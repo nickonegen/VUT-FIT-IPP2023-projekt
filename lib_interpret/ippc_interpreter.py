@@ -6,13 +6,7 @@ Implementácia triedy interprétu IPPcode23.
 import sys
 import xml.etree.ElementTree as ET  # skipcq: BAN-B405
 from lib_interpret.ippc_idata import Stack, Queue
-from lib_interpret.ippc_icontrol import (
-    Frame,
-    Instruction,
-    LabelArg,
-    UnresolvedVariable,
-    Value,
-)
+from lib_interpret.ippc_icontrol import *
 
 
 class Interpreter:
@@ -103,7 +97,7 @@ class Interpreter:
         def parse_xml_element(instr_elm: ET.Element) -> tuple[int, Instruction]:
             """Spracuje jeden element (inštrukciu) XML reprezentácie"""
             if instr_elm.tag != "instruction":
-                raise KeyError(f"Unexpected element: {instr_elm.tag}")
+                raise KeyError(f"Unexpected element {instr_elm.tag}")
             order = int(instr_elm.attrib["order"])
             if order < 1:
                 raise KeyError("Invalid instruction order")
@@ -160,11 +154,11 @@ class Interpreter:
             case "TF":
                 frame = self.frames["temporary"]
                 if frame is None:
-                    raise MemoryError("Attempted to access non-existent TF")
+                    raise MemoryError("Attempt to access non-existent TF")
             case "LF":
                 frame = self.frame_stack.top()
                 if frame is None:
-                    raise MemoryError("Attempted to access non-existent LF")
+                    raise MemoryError("Attempt to access non-existent LF")
             case "_":
                 raise AttributeError("Invalid frame name")
 
@@ -172,34 +166,36 @@ class Interpreter:
             raise AttributeError("Invalid frame name")
         return frame
 
-    def execute_next(self) -> int:
-        """Vykoná jednu inštrukciu a vráti jej návratovú hodnotu (default 0)"""
+    def execute_next(self) -> int | None:
+        """Vykoná jednu inštrukciu a vráti jej prípadnú návratovú hodnotu"""
 
         def validate_operand(operand, expected_type: str) -> bool:
             if operand is None:
-                raise RuntimeError("Bad number of operands")
+                raise RuntimeError(f"Unresolvable operand {operand}")
 
             if isinstance(operand, Value):
                 if expected_type in ("value", "symb"):
                     return True
                 if operand.type != expected_type:
                     raise TypeError(
-                        f"Unexpected operand type, expected {expected_type}"
+                        f"Unexpected operand type {operand.type}, {expected_type} expected"
                     )
                 return True
             if isinstance(operand, UnresolvedVariable):
                 if expected_type not in ("var", "symb"):
                     raise TypeError(
-                        f"Unexpected operand type, expected {expected_type}"
+                        f"Unexpected operand typ {operand.type}, {expected_type} expected"
                     )
                 return True
             if isinstance(operand, LabelArg):
                 if expected_type != "label":
                     raise TypeError(
-                        f"Unexpected operand type, expected {expected_type}"
+                        f"Unexpected operand type {operand.type}, {expected_type} expected"
                     )
+                if operand.name not in self.labels:
+                    raise RuntimeError(f"Undefined label {operand.name}")
                 return True
-            raise RuntimeError(f"Invalid operand {operand}")
+            raise RuntimeError(f"Unresolvable operand {operand}")
 
         def resolve_symb(
             symb: Value | UnresolvedVariable, expected_type="value"
@@ -211,16 +207,26 @@ class Interpreter:
                 frame = self.get_frame(symb.frame)
                 result = frame.get_variable(symb.name)
             if result is None:
-                raise IndexError(f"{symb} is not a valid defined symbol")
+                raise IndexError(f"Invalid symbol {symb}")
             validate_operand(result, expected_type)
             return result
 
         def check_opcount(expected_count: int) -> bool:
             if len(instr.operands) != expected_count:
                 raise RuntimeError(
-                    f"{expected_count} operands required, got {len(instr.operands)}"
+                    f"Wrong number of operands {len(instr.operands)}, {expected_count} expected"
                 )
             return True
+
+        def _dbgprint_variable(var: UnresolvedVariable, val: any):
+            if self._verbose:
+                print(
+                    f"    \033[32m{var.frame}@\033[0m{var.name} = \033[33m{val}\033[0m"
+                )
+
+        def _dbgprint_value(val: any):
+            if self._verbose:
+                print(f"    \033[33m{val}\033[0m")
 
         if self.program_counter >= len(self.instructions):
             return 0
@@ -235,24 +241,19 @@ class Interpreter:
         def execute_MOVE():
             """MOVE (var)targ (symb)val"""
             check_opcount(2)
-            [targ, val] = instr.operands
+            targ, val = instr.operands
             validate_operand(targ, "var")
             validate_operand(val, "symb")
             val = resolve_symb(val)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, val)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{val}\033[0m"
-                )
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["MOVE"] = execute_MOVE
 
         def execute_CREATEFRAME():
             """CREATEFRAME"""
             check_opcount(0)
-            if self.frames.get("temporary") is not None:
-                self.frames["temporary"] = None
             self.frames["temporary"] = Frame()
 
         opcode_impl["CREATEFRAME"] = execute_CREATEFRAME
@@ -261,7 +262,7 @@ class Interpreter:
             """PUSHFRAME"""
             check_opcount(0)
             if self.frames["temporary"] is None:
-                raise MemoryError("Attempted to push non-existent TF")
+                raise MemoryError("Attempt to push non-existent TF")
             self.frame_stack.push(self.frames["temporary"])
             self.frames["temporary"] = None
 
@@ -271,7 +272,7 @@ class Interpreter:
             """POPFRAME"""
             check_opcount(0)
             if self.frame_stack.is_empty():
-                raise MemoryError("Attempted to pop non-existent LF")
+                raise MemoryError("Attempt to pop non-existent LF")
             self.frames["temporary"] = self.frame_stack.pop()
 
         opcode_impl["POPFRAME"] = execute_POPFRAME
@@ -279,24 +280,19 @@ class Interpreter:
         def execute_DEFVAR():
             """DEFVAR (var)var"""
             check_opcount(1)
-            [var] = instr.operands
+            var = instr.operands[0]
             validate_operand(var, "var")
             frame = self.get_frame(var.frame)
             frame.define_variable(var.name)
-            if self._verbose:
-                print(
-                    f"    \033[32m{var.frame}@\033[0m{var.name} = \033[33mdefined\033[0m"
-                )
+            _dbgprint_variable(var, "[defined]")
 
         opcode_impl["DEFVAR"] = execute_DEFVAR
 
         def execute_CALL():
             """CALL (label)label"""
             check_opcount(1)
-            [label] = instr.operands
+            label = instr.operands[0]
             validate_operand(label, "label")
-            if label.name not in self.labels:
-                raise RuntimeError(f"Label {label.name} not found")
             self.call_stack.push(self.program_counter + 1)
             self.program_counter = self.labels[label.name]
 
@@ -306,38 +302,34 @@ class Interpreter:
             """RETURN"""
             check_opcount(0)
             if self.call_stack.is_empty():
-                raise IndexError("Nothing to return from (empty call stack)")
-            self.program_counter = self.call_stack.pop()
+                raise IndexError("Empty call stack, nothing to return to")
+            self.program_counter = self.call_stack.pop() - 1
 
         opcode_impl["RETURN"] = execute_RETURN
 
         def execute_PUSHS():
             """PUSHS (symb)val"""
             check_opcount(1)
-            [val] = instr.operands
+            val = instr.operands[0]
             validate_operand(val, "symb")
             val = resolve_symb(val)
             self.data_stack.push(val)
-            if self._verbose:
-                print(f"    pushed \033[33m{val}\033[0m")
+            _dbgprint_value(val.pyv())
 
         opcode_impl["PUSHS"] = execute_PUSHS
 
         def execute_POPS():
             """POPS (var)targ"""
             check_opcount(1)
-            [targ] = instr.operands
+            targ = instr.operands[0]
             validate_operand(targ, "var")
             try:
                 val = self.data_stack.pop()
             except IndexError:
-                raise IndexError("Nothing to pop from (empty data stack)")
+                raise IndexError("Empty data stack, nothing to pop")
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, val)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{val}\033[0m"
-                )
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["POPS"] = execute_POPS
 
@@ -350,17 +342,16 @@ class Interpreter:
             if not all(operand.type in ("int", "float") for operand in (val1, val2)):
                 raise TypeError("Unexpected operand type, expected int or float")
             if val1.type != val2.type:
-                raise TypeError("Operand types must be equal for ADD operation")
+                raise TypeError("Unequal operand types")
             rtype = val1.type
-            result_cont = val1.content + val2.content
-            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result_cont = val1.pyv() + val2.pyv()
+            result_cont = (
+                float(result_cont).hex() if rtype == "float" else str(result_cont)
+            )
             result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["ADD"] = execute_ADD
 
@@ -373,17 +364,16 @@ class Interpreter:
             if not all(operand.type in ("int", "float") for operand in (val1, val2)):
                 raise TypeError("Unexpected operand type, expected int or float")
             if val1.type != val2.type:
-                raise TypeError("Operand types must be equal for ADD operation")
+                raise TypeError("Unequal operand types")
             rtype = val1.type
-            result_cont = val1.content - val2.content
-            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result_cont = val1.pyv() - val2.pyv()
+            result_cont = (
+                float(result_cont).hex() if rtype == "float" else str(result_cont)
+            )
             result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["SUB"] = execute_SUB
 
@@ -396,17 +386,16 @@ class Interpreter:
             if not all(operand.type in ("int", "float") for operand in (val1, val2)):
                 raise TypeError("Unexpected operand type, expected int or float")
             if val1.type != val2.type:
-                raise TypeError("Operand types must be equal for ADD operation")
+                raise TypeError("Unequal operand types")
             rtype = val1.type
-            result_cont = val1.content * val2.content
-            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result_cont = val1.pyv() * val2.pyv()
+            result_cont = (
+                float(result_cont).hex() if rtype == "float" else str(result_cont)
+            )
             result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["MUL"] = execute_MUL
 
@@ -419,19 +408,18 @@ class Interpreter:
             if not all(operand.type in ("int", "float") for operand in (val1, val2)):
                 raise TypeError("Unexpected operand type, expected int or float")
             if val1.type != val2.type:
-                raise TypeError("Operand types must be equal for ADD operation")
-            if float(val2.content) == 0.0:
+                raise TypeError("Unequal operand types")
+            if val2.pyv() == 0.0:
                 raise ValueError("Division by zero")
             rtype = val1.type
-            result_cont = val1.content // val2.content
-            result_cont = float(result_cont).hex() if rtype == "float" else result_cont
+            result_cont = val1.pyv() // val2.pyv()
+            result_cont = (
+                float(result_cont).hex() if rtype == "float" else str(result_cont)
+            )
             result = Value(rtype, result_cont)
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["IDIV"] = execute_IDIV
 
@@ -444,176 +432,140 @@ class Interpreter:
             if not all(operand.type in ("int", "float") for operand in (val1, val2)):
                 raise TypeError("Unexpected operand type, expected int or float")
             if val1.type != val2.type:
-                raise TypeError("Operand types must be equal for ADD operation")
-            if float(val2.content) == 0.0:
+                raise TypeError("Unequal operand types")
+            if val2.pyv() == 0.0:
                 raise ValueError("Division by zero")
-            result = Value("float", float(val1.content / val2.content).hex())
+            result = Value("float", float(val1.pyv() / val2.pyv()).hex())
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["DIV"] = execute_DIV
 
         def execute_LT():
             """LT (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1)
-            val2 = resolve_symb(val2, val1.type)
+            val1, val2 = resolve_symb(val1), resolve_symb(val2, val1.type)
             if val1.type == "nil":
-                raise KeyError("Cannot compare nil")
-            result = Value("bool", val1.content < val2.content)
+                raise TypeError("Attempt to compare nil")
+            result = Value("bool", str(val1.pyv() < val2.pyv()))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["LT"] = execute_LT
 
         def execute_GT():
             """GT (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1)
-            val2 = resolve_symb(val2, val1.type)
+            val1, val2 = resolve_symb(val1), resolve_symb(val2, val1.type)
             if val1.type == "nil":
-                raise KeyError("Cannot compare nil")
-            result = Value("bool", val1.content > val2.content)
+                raise TypeError("Attempt to compare nil")
+            result = Value("bool", str(val1.pyv() > val2.pyv()))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["GT"] = execute_GT
 
         def execute_EQ():
             """EQ (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
             val1 = resolve_symb(val1)
-            val2 = resolve_symb(val2, val1.type)
             if val1.type == "nil":
-                raise KeyError("Cannot compare nil")
-            result = Value("bool", val1.content == val2.content)
+                val2 = resolve_symb(val2)
+                result = val2.type == "nil"
+            else:
+                val2 = resolve_symb(val2)
+                if val2.type == "nil":
+                    result = False
+                else:
+                    if val1.type != val2.type:
+                        raise TypeError("Unequal operand types")
+                    result = val1.pyv() == val2.pyv()
+            result_value = Value("bool", str(result))
             frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            frame.set_variable(targ.name, result_value)
+            _dbgprint_variable(targ, result_value.pyv())
 
         opcode_impl["EQ"] = execute_EQ
 
         def execute_AND():
             """AND (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "bool")
-            val2 = resolve_symb(val2, "bool")
-            result = Value("bool", val1.content and val2.content)
+            val1, val2 = resolve_symb(val1, "bool"), resolve_symb(val2, "bool")
+            result = Value("bool", str(val1.pyv() and val2.pyv()))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["AND"] = execute_AND
 
         def execute_OR():
             """OR (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "bool")
-            val2 = resolve_symb(val2, "bool")
-            result = Value("bool", val1.content or val2.content)
+            val1, val2 = resolve_symb(val1, "bool"), resolve_symb(val2, "bool")
+            result = Value("bool", str(val1.pyv() or val2.pyv()))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["OR"] = execute_OR
 
         def execute_NOT():
             """NOT (var)targ (symb)val"""
             check_opcount(2)
-            [targ, val] = instr.operands
+            targ, val = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val, "symb")
             val = resolve_symb(val, "bool")
-            result = Value("bool", not val.content)
+            result = Value("bool", str(not val.pyv()))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["NOT"] = execute_NOT
 
         def execute_INT2CHAR():
             """INT2CHAR (var)targ (symb)val"""
             check_opcount(2)
-            [targ, val] = instr.operands
+            targ, val = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val, "symb")
             val = resolve_symb(val, "int")
             try:
-                result = Value("string", chr(val.content))
+                result = Value("string", chr(val.pyv()))
             except ValueError:
-                raise NameError("Invalid codepoint")
+                raise NameError("Invalid Unicode codepoint")
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["INT2CHAR"] = execute_INT2CHAR
 
         def execute_STRI2INT():
             """STRI2INT (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "string")
-            val2 = resolve_symb(val2, "int")
+            val1, val2 = resolve_symb(val1, "string"), resolve_symb(val2, "int")
+            if val2.pyv() < 0 or val2.pyv() >= len(val1.pyv()):
+                raise NameError("Invalid index (out of bounds)")
             try:
-                result = Value("int", ord(val1.content[val2.content]))
+                result = Value("int", str(ord(val1.pyv()[val2.pyv()])))
             except IndexError:
-                raise NameError("Invalid index")
+                raise NameError("Invalid index (out of bounds)")
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["STRI2INT"] = execute_STRI2INT
 
@@ -623,13 +575,10 @@ class Interpreter:
             targ, val = instr.operands
             validate_operand(targ, "var")
             val = resolve_symb(val, "int")
-            result = Value("float", float(val.content).hex())
+            result = Value("float", float(val.pyv()).hex())
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["INT2FLOAT"] = execute_INT2FLOAT
 
@@ -639,40 +588,38 @@ class Interpreter:
             targ, val = instr.operands
             validate_operand(targ, "var")
             val = resolve_symb(val, "float")
-            result = Value("int", int(val.content))
+            result = Value("int", str(int(val.pyv())))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["FLOAT2INT"] = execute_FLOAT2INT
 
         def execute_READ():
             """READ (var)targ (type)ttype"""
             check_opcount(2)
-            [targ, ttype] = instr.operands
+            targ, ttype = instr.operands
             validate_operand(targ, "var")
             validate_operand(ttype, "type")
-            value = None
-            if self.input_queue.is_empty():
-                value = Value("nil", None)
-            else:
-                value = Value(ttype.content, self.input_queue.dequeue())
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, value)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{value}\033[0m"
+            val = None
+            try:
+                val = (
+                    Value("nil", "")
+                    if self.input_queue.is_empty()
+                    else Value(ttype.pyv(), str(self.input_queue.dequeue()))
                 )
+            except Exception:  # skipcq: PYL-W0703
+                val = Value("nil", "")
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["READ"] = execute_READ
 
         def execute_WRITE():
             """WRITE (symb)val"""
             check_opcount(1)
-            [val] = instr.operands
+            val = instr.operands[0]
             validate_operand(val, "symb")
             val = resolve_symb(val)
             print(str(val), end="")
@@ -684,115 +631,104 @@ class Interpreter:
         def execute_CONCAT():
             """CONCAT (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "string")
-            val2 = resolve_symb(val2, "string")
-            result = Value("string", val1.content + val2.content)
+            val1, val2 = resolve_symb(val1, "string"), resolve_symb(val2, "string")
+            result = Value("string", str(val1) + str(val2))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, str(result))
 
         opcode_impl["CONCAT"] = execute_CONCAT
 
         def execute_STRLEN():
             """STRLEN (var)targ (symb)val"""
             check_opcount(2)
-            [targ, val] = instr.operands
+            targ, val = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val, "symb")
             val = resolve_symb(val, "string")
-            result = Value("int", len(val.content))
+            result = Value("int", str(len(str(val))))
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, str(result))
 
         opcode_impl["STRLEN"] = execute_STRLEN
 
         def execute_GETCHAR():
             """GETCHAR (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
+            targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1, "string")
-            val2 = resolve_symb(val2, "int")
+            val1, val2 = resolve_symb(val1, "string"), resolve_symb(val2, "int")
+            if val2.pyv() < 0 or val2.pyv() >= len(str(val1)):
+                raise NameError("Invalid index")
+            result = Value("string", str(val1)[val2.pyv()])
             try:
-                result = Value("string", val1.content[val2.content])
-            except IndexError:
+                result = Value("string", str(val1)[val2.pyv()])
+            except Exception:  # skipcq: PYL-W0703
                 raise NameError("Invalid index")
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, str(result))
 
         opcode_impl["GETCHAR"] = execute_GETCHAR
 
         def execute_SETCHAR():
             """SETCHAR (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
-            [targ, val1, val2] = instr.operands
-            validate_operand(targ, "var")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            targ = resolve_symb(targ, "string")
-            val1 = resolve_symb(val1, "int")
-            val2 = resolve_symb(val2, "string")
-            try:
-                targ_list = list(targ.content)
-                targ_list[val1.content] = val2.content[0]
-                targ.content = "".join(targ_list)
-            except IndexError:
+            targ, val1, val2 = instr.operands
+            targ_val, val1, val2 = (
+                resolve_symb(targ, "string"),
+                resolve_symb(val1, "int"),
+                resolve_symb(val2, "string"),
+            )
+            if val1.pyv() < 0 or val1.pyv() >= len(str(targ_val)):
                 raise NameError("Invalid index")
+            result = None
+            try:
+                targ_list = list(str(targ_val))
+                targ_list[val1.pyv()] = str(val2)[0]
+                result = "".join(targ_list)
+            except Exception:  # skipcq: PYL-W0703
+                raise NameError("Invalid index")
+            result = Value("string", str(result))
+            targ_list = list(str(targ_val))
+            targ_list[val1.pyv()] = str(val2)[0]
+            result = Value("string", "".join(targ_list))
+            frame = self.get_frame(targ.frame)
+            frame.set_variable(targ.name, result)
+            _dbgprint_variable(targ, str(result))
 
         opcode_impl["SETCHAR"] = execute_SETCHAR
 
         def execute_TYPE():
             """TYPE (var)targ (symb)val"""
             check_opcount(2)
-            [targ, val] = instr.operands
+            targ, val = instr.operands
             validate_operand(targ, "var")
-            validate_operand(val, "symb")
             try:
                 val = resolve_symb(val)
                 result = Value("string", val.type)
             except IndexError:
-                val = Value("nil", None)
+                val = Value("nil", "")
                 result = Value("string", "")
             frame = self.get_frame(targ.frame)
             frame.set_variable(targ.name, result)
-            if self._verbose:
-                print(
-                    f"    \033[32m{targ.frame}@\033[0m{targ.name} = \033[33m{result}\033[0m"
-                )
+            _dbgprint_variable(targ, str(result))
 
         opcode_impl["TYPE"] = execute_TYPE
 
         def execute_LABEL():
             """LABEL (label)label"""
-            check_opcount(1)
-            # Náveštia rieši XML parser
+            check_opcount(1)  # Náveštie rieši XML parser
 
         opcode_impl["LABEL"] = execute_LABEL
 
         def execute_JUMP():
             """JUMP (label)label"""
             check_opcount(1)
-            [label] = instr.operands
+            label = instr.operands[0]
             validate_operand(label, "label")
-            if label.name not in self.labels:
-                raise RuntimeError(f"Label {label.name} not found")
             self.program_counter = self.labels[label.name]
 
         opcode_impl["JUMP"] = execute_JUMP
@@ -800,53 +736,58 @@ class Interpreter:
         def execute_JUMPIFEQ():
             """JUMPIFEQ (label)label (symb)val1 (symb)val2"""
             check_opcount(3)
-            [label, val1, val2] = instr.operands
+            label, val1, val2 = instr.operands
             validate_operand(label, "label")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1)
-            val2 = resolve_symb(val2)
-            if val1.type == val2.type and val1.content == val2.content:
-                if label.name not in self.labels:
-                    raise RuntimeError(f"Label {label.name} not found")
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            dojump: bool = False
+            if val1.type == val2.type:
+                dojump = val1.pyv() == val2.pyv()
+            elif val1.type == "nil" and val2.type == "nil":
+                dojump = True
+            elif val1.type != "nil" and val2.type != "nil":
+                raise TypeError("Unequal type comparison")
+            if dojump:
                 self.program_counter = self.labels[label.name]
+            _dbgprint_value(str(dojump).lower())
 
         opcode_impl["JUMPIFEQ"] = execute_JUMPIFEQ
 
         def execute_JUMPIFNEQ():
             """JUMPIFNEQ (label)label (symb)val1 (symb)val2"""
             check_opcount(3)
-            [label, val1, val2] = instr.operands
+            label, val1, val2 = instr.operands
             validate_operand(label, "label")
-            validate_operand(val1, "symb")
-            validate_operand(val2, "symb")
-            val1 = resolve_symb(val1)
-            val2 = resolve_symb(val2)
-            if val1 != val2:
-                if label.name not in self.labels:
-                    raise RuntimeError(f"Label {label.name} not found")
+            val1, val2 = resolve_symb(val1), resolve_symb(val2)
+            dojump = False
+            if val1.type == val2.type:
+                dojump = val1.pyv() != val2.pyv()
+            elif val1.type == "nil" and val2.type != "nil":
+                dojump = True
+            elif val1.type != "nil" and val2.type == "nil":
+                dojump = True
+            else:
+                raise TypeError("Unequal type comparison")
+            if dojump:
                 self.program_counter = self.labels[label.name]
+            _dbgprint_value(str(dojump).lower())
 
         opcode_impl["JUMPIFNEQ"] = execute_JUMPIFNEQ
 
         def execute_EXIT():
             """EXIT (symb)val"""
             check_opcount(1)
-            [val] = instr.operands
-            validate_operand(val, "symb")
-            val = resolve_symb(val, "int")
-            if val.content < 0 or val.content > 49:
-                raise ValueError("Invalid exit code")
-            return val.content
+            val = resolve_symb(instr.operands[0], "int")
+            if 0 <= val.pyv() <= 49:
+                _dbgprint_value(val.pyv())
+                return val.content
+            raise ValueError("Invalid exit code")
 
         opcode_impl["EXIT"] = execute_EXIT
 
         def execute_DPRINT():
             """DPRINT (symb)val"""
             check_opcount(1)
-            [val] = instr.operands
-            validate_operand(val, "symb")
-            val = resolve_symb(val)
+            val = resolve_symb(instr.operands[0])
             print(str(val), file=sys.stderr, end="")
 
         opcode_impl["DPRINT"] = execute_DPRINT
@@ -859,10 +800,8 @@ class Interpreter:
         opcode_impl["BREAK"] = execute_BREAK
 
         iexecute = opcode_impl.get(instr.opcode)
-        if iexecute:
-            retcode = iexecute()
-        else:
+        if not iexecute:
             raise RuntimeError("Unrecognised instruction")
-
+        retcode = iexecute()
         self.program_counter += 1
-        return retcode or 0
+        return retcode
