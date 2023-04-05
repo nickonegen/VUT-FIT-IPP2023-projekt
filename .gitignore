@@ -5,6 +5,11 @@ options
 # Python
 *.pyc
 
+# Outputs
+*.out
+*.html
+stat?.txt
+
 # Testing
 tests
 test.**
