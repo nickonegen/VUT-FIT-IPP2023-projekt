@@ -5,8 +5,7 @@ Implementácia triedy interprétu IPPcode23.
 
 import sys
 import xml.etree.ElementTree as ET  # skipcq: BAN-B405
-from lib_interpret.ippc_idata import Stack, Queue
-from lib_interpret.ippc_icontrol import *
+from lib_interpret.ippc_utils import *
 
 
 class Interpreter:

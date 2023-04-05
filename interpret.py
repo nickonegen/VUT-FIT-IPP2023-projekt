@@ -8,8 +8,7 @@ Interprét XML reprezentácie programu v jazyku IPPcode23
 import sys
 import getopt
 import xml.etree.ElementTree as ET  # skipcq: BAN-B405
-from lib_interpret.ippc_interpreter import Interpreter
-from lib_interpret.ippc_idata import IEXCEPTIONC, RETCODE
+from lib_interpret.ippc_interpreter import EXCEPTMAP, RETCODE, Interpreter
 
 """
 Pomocné funkcie
@@ -137,7 +136,7 @@ def main():
         except KeyboardInterrupt:
             throw_err("EINT", "Interrupted by user", colour=colout)
         except Exception as error:  # skipcq: PYL-W0703
-            error_code = IEXCEPTIONC.get(type(error), "EINT")
+            error_code = EXCEPTMAP.get(type(error), "EINT")
             throw_err(error_code, str(error), next_instruction, colout)
 
     sys.exit(returncode or RETCODE.get("OK"))
