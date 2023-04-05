@@ -56,12 +56,11 @@ class Value:
     def __str__(self):
         if self.type == "nil" or self.content is None:
             return ""
-        elif self.type == "float":
+        if self.type == "float":
             return str(self.content.hex())
-        elif self.type == "bool":
+        if self.type == "bool":
             return str(self.content).lower()
-        else:
-            return str(self.content)
+        return str(self.content)
 
     def pyv(self):
         """Python hodnota premennej"""
