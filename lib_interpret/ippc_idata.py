@@ -44,27 +44,27 @@ class Stack:
             "  >  " + "\n     ".join(str(item) for item in reversed(self._items)) + "\n"
         )
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """Dotaz na prázdnosť zásobníka"""
         return len(self._items) == 0
 
-    def push(self, item):
+    def push(self, item: any):
         """Pridá položku na vrchol zásobníka"""
         self._items.append(item)
 
-    def pop(self):
+    def pop(self) -> any:
         """Odoberie a vráti položku z vrcholu zásobníka (prádzny -> EINT)"""
         if not self.is_empty():
             return self._items.pop()
-        raise Exception("Cannot access empty stack")
+        raise IndexError("Cannot access empty stack")
 
-    def top(self):
+    def top(self) -> any:
         """Vráti položku na vrchole zásobníka (prázdny -> None)"""
         if not self.is_empty():
             return self._items[-1]
         return None
 
-    def size(self):
+    def size(self) -> int:
         """Vráti počet položiek v zásobníku"""
         return len(self._items)
 
@@ -80,26 +80,26 @@ class Queue:
             return "  > (empty)\n"
         return "  >  " + "\n     ".join(str(item) for item in self._items) + "\n"
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """Dotaz na prázdnosť fronty"""
         return len(self._items) == 0
 
-    def enqueue(self, item):
+    def enqueue(self, item: any):
         """Pridá položku na koniec fronty"""
         self._items.append(item)
 
-    def dequeue(self):
+    def dequeue(self) -> any:
         """Odoberie a vráti položku zo začiatku fronty (prázdny -> EINT)"""
         if not self.is_empty():
             return self._items.pop(0)
-        raise Exception("Cannot access empty queue")
+        raise IndexError("Cannot access empty queue")
 
-    def top(self):
+    def top(self) -> any:
         """Vráti položku na začiatku fronty (prázdny -> None)"""
         if not self.is_empty():
             return self._items[0]
         return None
 
-    def size(self):
+    def size(self) -> int:
         """Vráti počet položiek v fronte."""
         return len(self._items)

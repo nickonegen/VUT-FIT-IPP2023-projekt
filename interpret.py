@@ -36,10 +36,12 @@ def print_help():
 
 
 def parse_args():
-    arguments = {"source": None, "input": None, "debug_print": False}
+    arguments = {"source": None, "input": None, "debug_print": False, "fancier": False}
 
     try:
-        opts, _ = getopt.getopt(sys.argv[1:], "hd", ["help", "source=", "input="])
+        opts, _ = getopt.getopt(
+            sys.argv[1:], "hd", ["help", "fancier", "source=", "input="]
+        )
     except getopt.GetoptError as error:
         throw_err("EPARAM", str(error))
         sys.exit(RETCODE["EPARAM"])
@@ -53,6 +55,8 @@ def parse_args():
             arguments["source"] = arg
         elif opt == "--input":
             arguments["input"] = arg
+        elif opt == "--fancier":
+            arguments["fancier"] = True
 
     if arguments["source"] is None and arguments["input"] is None:
         throw_err("EPARAM", "--source or --input required")
@@ -62,21 +66,19 @@ def parse_args():
 
 def read_file_content(file_path):
     if file_path is None:
-        try:
-            return sys.stdin.read()
-        except KeyboardInterrupt:
-            throw_err("EINT", "Interrupted by user")
-    try:
-        with open(file_path, "r") as f:
-            return f.read()
-    except FileNotFoundError as error:
-        throw_err("ENOENT", error.args[1])
+        return sys.stdin.read()
+    with open(file_path, "r") as f:
+        return f.read()
 
 
-def throw_err(ecode, msg, instr=None):
-    err_prefix = "\033[31;49;1mERR!\033[0m"
-    code_label = "\033[35;49mcode\033[0m"
-    instr_label = "\033[35;49minstr\033[0m"
+def throw_err(ecode, msg, instr=None, colour=False):
+    err_prefix = "ERR!"
+    code_label = "code"
+    instr_label = "instr"
+    if colour:
+        err_prefix = f"\033[31;49;1m{err_prefix}\033[0m"
+        code_label = f"\033[35;49m{code_label}\033[0m"
+        instr_label = f"\033[35;49m{instr_label}\033[0m"
     err_msg = str(msg).replace('"', "").replace("'", "")
 
     err_str = f"{err_prefix} {code_label} {ecode}"
@@ -94,40 +96,51 @@ Hlavná časť programu
 
 
 def main():
+    # Spracovanie parametrov
     arguments = parse_args()
-    source_cont = read_file_content(arguments["source"])
-    input_cont = read_file_content(arguments["input"])
+    colout = arguments["fancier"]
 
+    # Načítanie zdrojového kódu a vstupu
+    try:
+        source_cont = read_file_content(arguments["source"])
+        input_cont = read_file_content(arguments["input"])
+    except KeyboardInterrupt:
+        throw_err("EINT", "Interrupted by user", colour=colout)
+        sys.exit(RETCODE.get("EINT"))
+    except FileNotFoundError as error:
+        throw_err("ENOENT", error.args[1], colour=colout)
+        sys.exit(RETCODE.get("ENOENT"))
+
+    # Inicializácia interpréta
     try:
         interpret = Interpreter(source_cont, input_cont)
     except ET.ParseError as error:
-        throw_err("EXML", str(error))
+        throw_err("EXML", str(error), colour=colout)
         sys.exit(RETCODE.get("EXML"))
     except KeyboardInterrupt:
-        throw_err("EINT", "Interrupted by user")
+        throw_err("EINT", "Interrupted by user", colour=colout)
         sys.exit(RETCODE.get("EINT"))
-    except Exception as error:  # skipcq: PYL-W0703 - catch all exceptions
-        throw_err("ESTRUC", str(error))
+    except Exception as error:  # skipcq: PYL-W0703
+        throw_err("ESTRUC", str(error), colour=colout)
         sys.exit(RETCODE.get("ESTRUC"))
-
     if arguments["debug_print"]:
         interpret.make_verbose()
 
-    returncode = 0
+    # Hlavný cyklus behu
+    returncode = None
     while True:
         next_instruction = interpret.peek_instruction()
-        if next_instruction is None:
+        if next_instruction is None or returncode is not None:
             break
-
         try:
             returncode = interpret.execute_next()
         except KeyboardInterrupt:
-            throw_err("EINT", "Interrupted by user")
-        except Exception as error:  # skipcq: PYL-W0703 - catch all exceptions
+            throw_err("EINT", "Interrupted by user", colour=colout)
+        except Exception as error:  # skipcq: PYL-W0703
             error_code = IEXCEPTIONC.get(type(error), "EINT")
-            throw_err(error_code, str(error), next_instruction)
+            throw_err(error_code, str(error), next_instruction, colout)
 
-    sys.exit(returncode)
+    sys.exit(returncode or RETCODE.get("OK"))
 
 
 if __name__ == "__main__":
