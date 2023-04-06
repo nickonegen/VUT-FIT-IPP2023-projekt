@@ -168,24 +168,24 @@ class Interpreter:
     def execute_next(self) -> int | None:
         """Vykoná jednu inštrukciu a vráti jej prípadnú návratovú hodnotu"""
 
-        def validate_operand(operand, expected_type: str) -> bool:
+        def validate_operand(operand, expected_type: str) -> any:
             if operand is None:
                 raise RuntimeError(f"Unresolvable operand {operand}")
 
             if isinstance(operand, Value):
                 if expected_type in ("value", "symb"):
-                    return True
+                    return operand
                 if operand.type != expected_type:
                     raise TypeError(
                         f"Unexpected operand type {operand.type}, {expected_type} expected"
                     )
-                return True
+                return operand
             if isinstance(operand, UnresolvedVariable):
                 if expected_type not in ("var", "symb"):
                     raise TypeError(
                         f"Unexpected operand typ {operand.type}, {expected_type} expected"
                     )
-                return True
+                return operand
             if isinstance(operand, LabelArg):
                 if expected_type != "label":
                     raise TypeError(
@@ -193,7 +193,7 @@ class Interpreter:
                     )
                 if operand.name not in self.labels:
                     raise RuntimeError(f"Undefined label {operand.name}")
-                return True
+                return operand
             raise RuntimeError(f"Unresolvable operand {operand}")
 
         def resolve_symb(
@@ -217,6 +217,11 @@ class Interpreter:
                 )
             return True
 
+        def check_stacklen(size: int) -> bool:
+            if self.data_stack.size() < size:
+                raise IndexError(f"Stack underflow")
+            return True
+
         def _dbgprint_variable(var: UnresolvedVariable, val: any):
             if self._verbose:
                 print(
@@ -226,6 +231,12 @@ class Interpreter:
         def _dbgprint_value(val: any):
             if self._verbose:
                 print(f"    \033[33m{val}\033[0m")
+
+        def _dbgprint_stacktop():
+            if self._verbose:
+                print(
+                    f"    {{\033[33m{self.data_stack.top().pyv() if not self.data_stack.is_empty() else  'NULL'}\033[0m}}"
+                )
 
         if self.program_counter >= len(self.instructions):
             return 0
@@ -244,8 +255,7 @@ class Interpreter:
             validate_operand(targ, "var")
             validate_operand(val, "symb")
             val = resolve_symb(val)
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, val)
+            self.get_frame(targ.frame).set_variable(targ.name, val)
             _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["MOVE"] = execute_MOVE
@@ -279,10 +289,8 @@ class Interpreter:
         def execute_DEFVAR():
             """DEFVAR (var)var"""
             check_opcount(1)
-            var = instr.operands[0]
-            validate_operand(var, "var")
-            frame = self.get_frame(var.frame)
-            frame.define_variable(var.name)
+            var = validate_operand(instr.operands[0], "var")
+            self.get_frame(var.frame).define_variable(var.name)
             _dbgprint_variable(var, "[defined]")
 
         opcode_impl["DEFVAR"] = execute_DEFVAR
@@ -290,8 +298,7 @@ class Interpreter:
         def execute_CALL():
             """CALL (label)label"""
             check_opcount(1)
-            label = instr.operands[0]
-            validate_operand(label, "label")
+            label = validate_operand(instr.operands[0], "label")
             self.call_stack.push(self.program_counter + 1)
             self.program_counter = self.labels[label.name]
 
@@ -309,26 +316,21 @@ class Interpreter:
         def execute_PUSHS():
             """PUSHS (symb)val"""
             check_opcount(1)
-            val = instr.operands[0]
-            validate_operand(val, "symb")
-            val = resolve_symb(val)
-            self.data_stack.push(val)
-            _dbgprint_value(val.pyv())
+            val = validate_operand(instr.operands[0], "symb")
+            self.data_stack.push(resolve_symb(val))
+            _dbgprint_stacktop()
 
         opcode_impl["PUSHS"] = execute_PUSHS
 
         def execute_POPS():
             """POPS (var)targ"""
             check_opcount(1)
-            targ = instr.operands[0]
-            validate_operand(targ, "var")
-            try:
-                val = self.data_stack.pop()
-            except IndexError:
-                raise IndexError("Empty data stack, nothing to pop")
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, val)
+            targ = validate_operand(instr.operands[0], "var")
+            check_stacklen(1)
+            val = self.data_stack.pop()
+            self.get_frame(targ.frame).set_variable(targ.name, val)
             _dbgprint_variable(targ, val.pyv())
+            _dbgprint_stacktop()
 
         opcode_impl["POPS"] = execute_POPS
 
@@ -337,19 +339,10 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
-                raise TypeError("Unexpected operand type, expected int or float")
-            if val1.type != val2.type:
-                raise TypeError("Unequal operand types")
-            rtype = val1.type
-            result_cont = val1.pyv() + val2.pyv()
-            result_cont = (
-                float(result_cont).hex() if rtype == "float" else str(result_cont)
-            )
-            result = Value(rtype, result_cont)
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) + resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["ADD"] = execute_ADD
@@ -359,19 +352,10 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
-                raise TypeError("Unexpected operand type, expected int or float")
-            if val1.type != val2.type:
-                raise TypeError("Unequal operand types")
-            rtype = val1.type
-            result_cont = val1.pyv() - val2.pyv()
-            result_cont = (
-                float(result_cont).hex() if rtype == "float" else str(result_cont)
-            )
-            result = Value(rtype, result_cont)
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) - resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["SUB"] = execute_SUB
@@ -381,77 +365,49 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
-                raise TypeError("Unexpected operand type, expected int or float")
-            if val1.type != val2.type:
-                raise TypeError("Unequal operand types")
-            rtype = val1.type
-            result_cont = val1.pyv() * val2.pyv()
-            result_cont = (
-                float(result_cont).hex() if rtype == "float" else str(result_cont)
-            )
-            result = Value(rtype, result_cont)
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) * resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["MUL"] = execute_MUL
-
-        def execute_IDIV():
-            """IDIV (var)targ (symb)val1 (symb)val2"""
-            check_opcount(3)
-            targ, val1, val2 = instr.operands
-            validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
-                raise TypeError("Unexpected operand type, expected int or float")
-            if val1.type != val2.type:
-                raise TypeError("Unequal operand types")
-            if val2.pyv() == 0.0:
-                raise ValueError("Division by zero")
-            rtype = val1.type
-            result_cont = val1.pyv() // val2.pyv()
-            result_cont = (
-                float(result_cont).hex() if rtype == "float" else str(result_cont)
-            )
-            result = Value(rtype, result_cont)
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
-            _dbgprint_variable(targ, result.pyv())
-
-        opcode_impl["IDIV"] = execute_IDIV
 
         def execute_DIV():
             """DIV (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            if not all(operand.type in ("int", "float") for operand in (val1, val2)):
-                raise TypeError("Unexpected operand type, expected int or float")
-            if val1.type != val2.type:
-                raise TypeError("Unequal operand types")
-            if val2.pyv() == 0.0:
-                raise ValueError("Division by zero")
-            result = Value("float", float(val1.pyv() / val2.pyv()).hex())
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) / resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["DIV"] = execute_DIV
+
+        def execute_IDIV():
+            """IDIV (var)targ (symb)val1 (symb)val2"""
+            check_opcount(3)
+            targ, val1, val2 = instr.operands
+            validate_operand(targ, "var")
+            validate_operand(targ, "symb")
+            validate_operand(targ, "symb")
+            result = resolve_symb(val1) // resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
+            _dbgprint_variable(targ, result.pyv())
+
+        opcode_impl["IDIV"] = execute_IDIV
 
         def execute_LT():
             """LT (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2, val1.type)
-            if val1.type == "nil":
-                raise TypeError("Attempt to compare nil")
-            result = Value("bool", str(val1.pyv() < val2.pyv()))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) < resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["LT"] = execute_LT
@@ -461,12 +417,10 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1), resolve_symb(val2, val1.type)
-            if val1.type == "nil":
-                raise TypeError("Attempt to compare nil")
-            result = Value("bool", str(val1.pyv() > val2.pyv()))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) > resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["GT"] = execute_GT
@@ -476,22 +430,11 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1 = resolve_symb(val1)
-            if val1.type == "nil":
-                val2 = resolve_symb(val2)
-                result = val2.type == "nil"
-            else:
-                val2 = resolve_symb(val2)
-                if val2.type == "nil":
-                    result = False
-                else:
-                    if val1.type != val2.type:
-                        raise TypeError("Unequal operand types")
-                    result = val1.pyv() == val2.pyv()
-            result_value = Value("bool", str(result))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result_value)
-            _dbgprint_variable(targ, result_value.pyv())
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1) == resolve_symb(val2)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
+            _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["EQ"] = execute_EQ
 
@@ -500,10 +443,10 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1, "bool"), resolve_symb(val2, "bool")
-            result = Value("bool", str(val1.pyv() and val2.pyv()))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1, "bool") & resolve_symb(val2, "bool")
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["AND"] = execute_AND
@@ -513,10 +456,10 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1, "bool"), resolve_symb(val2, "bool")
-            result = Value("bool", str(val1.pyv() or val2.pyv()))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = resolve_symb(val1, "bool") | resolve_symb(val2, "bool")
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["OR"] = execute_OR
@@ -526,10 +469,9 @@ class Interpreter:
             check_opcount(2)
             targ, val = instr.operands
             validate_operand(targ, "var")
-            val = resolve_symb(val, "bool")
-            result = Value("bool", str(not val.pyv()))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val, "symb")
+            result = ~resolve_symb(val, "bool")
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, result.pyv())
 
         opcode_impl["NOT"] = execute_NOT
@@ -539,32 +481,24 @@ class Interpreter:
             check_opcount(2)
             targ, val = instr.operands
             validate_operand(targ, "var")
-            val = resolve_symb(val, "int")
-            try:
-                result = Value("string", chr(val.pyv()))
-            except ValueError:
-                raise NameError("Invalid Unicode codepoint")
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
-            _dbgprint_variable(targ, result.pyv())
+            validate_operand(val, "symb")
+            val = resolve_symb(val, "int").to_type("string")
+            self.get_frame(targ.frame).set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["INT2CHAR"] = execute_INT2CHAR
 
         def execute_STRI2INT():
-            """STRI2INT (var)targ (symb)val1 (symb)val2"""
+            """STRI2INT (var)targ (symb)val (symb)idx"""
             check_opcount(3)
-            targ, val1, val2 = instr.operands
+            targ, val, idx = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1, "string"), resolve_symb(val2, "int")
-            if val2.pyv() < 0 or val2.pyv() >= len(val1.pyv()):
-                raise NameError("Invalid index (out of bounds)")
-            try:
-                result = Value("int", str(ord(val1.pyv()[val2.pyv()])))
-            except IndexError:
-                raise NameError("Invalid index (out of bounds)")
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
-            _dbgprint_variable(targ, result.pyv())
+            validate_operand(val, "symb")
+            validate_operand(idx, "symb")
+            idx = resolve_symb(idx, "int")
+            val = resolve_symb(val, "string").to_type("int", idx.pyv())
+            self.get_frame(targ.frame).set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["STRI2INT"] = execute_STRI2INT
 
@@ -573,11 +507,10 @@ class Interpreter:
             check_opcount(2)
             targ, val = instr.operands
             validate_operand(targ, "var")
-            val = resolve_symb(val, "int")
-            result = Value("float", float(val.pyv()).hex())
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
-            _dbgprint_variable(targ, result.pyv())
+            validate_operand(val, "symb")
+            val = resolve_symb(val, "int").to_type("float")
+            self.get_frame(targ.frame).set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["INT2FLOAT"] = execute_INT2FLOAT
 
@@ -586,11 +519,10 @@ class Interpreter:
             check_opcount(2)
             targ, val = instr.operands
             validate_operand(targ, "var")
-            val = resolve_symb(val, "float")
-            result = Value("int", str(int(val.pyv())))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
-            _dbgprint_variable(targ, result.pyv())
+            validate_operand(val, "symb")
+            val = resolve_symb(val, "float").to_type("int")
+            self.get_frame(targ.frame).set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["FLOAT2INT"] = execute_FLOAT2INT
 
@@ -600,7 +532,6 @@ class Interpreter:
             targ, ttype = instr.operands
             validate_operand(targ, "var")
             validate_operand(ttype, "type")
-            val = None
             try:
                 val = (
                     Value("nil", "")
@@ -609,8 +540,7 @@ class Interpreter:
                 )
             except Exception:  # skipcq: PYL-W0703
                 val = Value("nil", "")
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, val)
+            self.get_frame(targ.frame).set_variable(targ.name, val)
             _dbgprint_variable(targ, val.pyv())
 
         opcode_impl["READ"] = execute_READ
@@ -618,10 +548,8 @@ class Interpreter:
         def execute_WRITE():
             """WRITE (symb)val"""
             check_opcount(1)
-            val = instr.operands[0]
-            validate_operand(val, "symb")
-            val = resolve_symb(val)
-            print(str(val), end="")
+            val = validate_operand(instr.operands[0], "symb")
+            print(str(resolve_symb(val)), end="")
             if self._verbose:
                 print("")
 
@@ -632,10 +560,14 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
-            val1, val2 = resolve_symb(val1, "string"), resolve_symb(val2, "string")
-            result = Value("string", str(val1) + str(val2))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            result = str(resolve_symb(val1, "string")) + str(
+                resolve_symb(val2, "string")
+            )
+            self.get_frame(targ.frame).set_variable(
+                targ.name, Value("string", str(result))
+            )
             _dbgprint_variable(targ, str(result))
 
         opcode_impl["CONCAT"] = execute_CONCAT
@@ -645,10 +577,9 @@ class Interpreter:
             check_opcount(2)
             targ, val = instr.operands
             validate_operand(targ, "var")
-            val = resolve_symb(val, "string")
-            result = Value("int", str(len(str(val))))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            validate_operand(val, "symb")
+            result = Value("int", str(len(str(resolve_symb(val, "string")))))
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, str(result))
 
         opcode_impl["STRLEN"] = execute_STRLEN
@@ -658,16 +589,11 @@ class Interpreter:
             check_opcount(3)
             targ, val1, val2 = instr.operands
             validate_operand(targ, "var")
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
             val1, val2 = resolve_symb(val1, "string"), resolve_symb(val2, "int")
-            if val2.pyv() < 0 or val2.pyv() >= len(str(val1)):
-                raise NameError("Invalid index")
-            result = Value("string", str(val1)[val2.pyv()])
-            try:
-                result = Value("string", str(val1)[val2.pyv()])
-            except Exception:  # skipcq: PYL-W0703
-                raise NameError("Invalid index")
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            result = val1.to_type("string", val2.pyv())
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, str(result))
 
         opcode_impl["GETCHAR"] = execute_GETCHAR
@@ -676,26 +602,19 @@ class Interpreter:
             """SETCHAR (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
             targ, val1, val2 = instr.operands
-            targ_val, val1, val2 = (
-                resolve_symb(targ, "string"),
-                resolve_symb(val1, "int"),
-                resolve_symb(val2, "string"),
-            )
-            if val1.pyv() < 0 or val1.pyv() >= len(str(targ_val)):
-                raise NameError("Invalid index")
-            result = None
+            validate_operand(targ, "var")
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
+            tval = resolve_symb(targ, "string")
+            val1, val2 = resolve_symb(val1, "int"), resolve_symb(val2, "string")
+            tval.to_type("string", val1.pyv())  # Overí index
             try:
-                targ_list = list(str(targ_val))
-                targ_list[val1.pyv()] = str(val2)[0]
-                result = "".join(targ_list)
+                tlist = list(str(tval))
+                tlist[val1.pyv()] = str(val2)[0]
+                result = Value("string", "".join(tlist))
             except Exception:  # skipcq: PYL-W0703
                 raise NameError("Invalid index")
-            result = Value("string", str(result))
-            targ_list = list(str(targ_val))
-            targ_list[val1.pyv()] = str(val2)[0]
-            result = Value("string", "".join(targ_list))
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, str(result))
 
         opcode_impl["SETCHAR"] = execute_SETCHAR
@@ -705,14 +624,14 @@ class Interpreter:
             check_opcount(2)
             targ, val = instr.operands
             validate_operand(targ, "var")
+            validate_operand(val, "symb")
             try:
                 val = resolve_symb(val)
                 result = Value("string", val.type)
             except IndexError:
                 val = Value("nil", "")
                 result = Value("string", "")
-            frame = self.get_frame(targ.frame)
-            frame.set_variable(targ.name, result)
+            self.get_frame(targ.frame).set_variable(targ.name, result)
             _dbgprint_variable(targ, str(result))
 
         opcode_impl["TYPE"] = execute_TYPE
@@ -737,14 +656,10 @@ class Interpreter:
             check_opcount(3)
             label, val1, val2 = instr.operands
             validate_operand(label, "label")
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
             val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            dojump: bool = False
-            if val1.type == val2.type:
-                dojump = val1.pyv() == val2.pyv()
-            elif val1.type == "nil" and val2.type == "nil":
-                dojump = True
-            elif val1.type != "nil" and val2.type != "nil":
-                raise TypeError("Unequal type comparison")
+            dojump = (val1 == val2).pyv()
             if dojump:
                 self.program_counter = self.labels[label.name]
             _dbgprint_value(str(dojump).lower())
@@ -756,16 +671,10 @@ class Interpreter:
             check_opcount(3)
             label, val1, val2 = instr.operands
             validate_operand(label, "label")
+            validate_operand(val1, "symb")
+            validate_operand(val2, "symb")
             val1, val2 = resolve_symb(val1), resolve_symb(val2)
-            dojump = False
-            if val1.type == val2.type:
-                dojump = val1.pyv() != val2.pyv()
-            elif val1.type == "nil" and val2.type != "nil":
-                dojump = True
-            elif val1.type != "nil" and val2.type == "nil":
-                dojump = True
-            else:
-                raise TypeError("Unequal type comparison")
+            dojump = (val1 != val2).pyv()
             if dojump:
                 self.program_counter = self.labels[label.name]
             _dbgprint_value(str(dojump).lower())
@@ -775,7 +684,8 @@ class Interpreter:
         def execute_EXIT():
             """EXIT (symb)val"""
             check_opcount(1)
-            val = resolve_symb(instr.operands[0], "int")
+            val = validate_operand(instr.operands[0], "symb")
+            val = resolve_symb(val, "int")
             if 0 <= val.pyv() <= 49:
                 _dbgprint_value(val.pyv())
                 return val.content
@@ -786,7 +696,8 @@ class Interpreter:
         def execute_DPRINT():
             """DPRINT (symb)val"""
             check_opcount(1)
-            val = resolve_symb(instr.operands[0])
+            val = validate_operand(instr.operands[0], "symb")
+            val = resolve_symb(val)
             print(str(val), file=sys.stderr, end="")
 
         opcode_impl["DPRINT"] = execute_DPRINT

@@ -67,6 +67,10 @@ class Stack:
             return self._items[-1]
         return None
 
+    def clear(self):
+        """Vyprázdni zásobník"""
+        self._items = []
+
     def size(self) -> int:
         """Vráti počet položiek v zásobníku"""
         return len(self._items)
@@ -169,6 +173,143 @@ class Value:
         if self.type == "nil" or self.content is None:
             return ""
         return self.content
+
+    def to_type(self, type: str, idx=None):
+        tx, ty = self.type, type
+        x = self.pyv()
+
+        def _to_int():
+            if tx == "int":
+                return self
+            if tx == "float":
+                return Value("int", int(x))
+            if tx == "string":
+                if not isinstance(idx, int):
+                    raise TypeError(f"Missing index")
+                sx = str(self)
+                if idx < 0 or idx >= len(sx):
+                    raise NameError(f"Index out of bounds")
+                try:
+                    return Value("int", str(ord(sx[idx])))
+                except IndexError:
+                    raise NameError(f"Invalid index")
+            raise TypeError(f"Invalid type conversion")
+
+        def _to_float():
+            if tx == "int":
+                return Value("float", float(x).hex())
+            if tx == "float":
+                return self
+            raise TypeError(f"Invalid type conversion")
+
+        def _to_string():
+            if tx == "int":
+                try:
+                    return Value("string", chr(x))
+                except Exception:  # skipcq: PYL-W0703
+                    raise NameError("Invalid codepoint")
+            if tx == "string":
+                if not isinstance(idx, int):
+                    return self
+                sx = str(self)
+                if idx < 0 or idx >= len(sx):
+                    raise NameError(f"Index out of bounds")
+                try:
+                    return Value("string", sx[idx])
+                except IndexError:
+                    raise NameError(f"Invalid index")
+            raise TypeError(f"Invalid type conversion")
+
+        if ty == "int":
+            return _to_int()
+        if ty == "float":
+            return _to_float()
+        if ty == "string":
+            return _to_string()
+        raise TypeError(f"Invalid type conversion")
+
+    def _operation(self, op, other):
+        tx, ty = self.type, other.type
+        x, y = self.pyv(), other.pyv()
+
+        if tx == "nil" or ty == "nil":
+            if op == "eq":
+                return Value("bool", str(tx == ty))
+            raise TypeError("Unexpected operand type")
+        if op in ("add", "sub", "mul", "div", "idiv") and (tx not in ("int", "float")):
+            raise TypeError("Unexpected operand type")
+        if op in ("and", "or", "not") and (tx != "bool"):
+            raise TypeError("Unexpected operand type")
+        if tx != ty:
+            raise TypeError(f"Unequal operand types")
+        if (op == "div" or op == "idiv") and y == 0:
+            raise ValueError("Zero division")
+
+        if op == "add":
+            result = x + y
+        elif op == "sub":
+            result = x - y
+        elif op == "mul":
+            result = x * y
+        elif op == "div":
+            result = x / y
+        elif op == "idiv":
+            result = x // y
+        elif op == "lt":
+            return Value("bool", str(x < y))
+        elif op == "gt":
+            return Value("bool", str(x > y))
+        elif op == "eq":
+            return Value("bool", str(x == y))
+        elif op == "and":
+            return Value("bool", str(x and y))
+        elif op == "or":
+            return Value("bool", str(x or y))
+        elif op == "not":
+            return Value("bool", str(not x))
+        else:
+            raise Exception("Invalid operation")
+
+        if self.type == "int" and op != "div":
+            return Value("int", str(result))
+        else:
+            return Value("float", float(result).hex())
+
+    def __add__(self, other):
+        return self._operation("add", other)
+
+    def __sub__(self, other):
+        return self._operation("sub", other)
+
+    def __mul__(self, other):
+        return self._operation("mul", other)
+
+    def __truediv__(self, other):
+        return self._operation("div", other)
+
+    def __floordiv__(self, other):
+        return self._operation("idiv", other)
+
+    def __lt__(self, other):
+        return self._operation("lt", other)
+
+    def __gt__(self, other):
+        return self._operation("gt", other)
+
+    def __eq__(self, other):
+        return self._operation("eq", other)
+
+    def __ne__(self, other):
+        return ~self._operation("eq", other)
+
+    def __and__(self, other):
+        return self._operation("and", other)
+
+    def __or__(self, other):
+        return self._operation("or", other)
+
+    def __invert__(self):
+        return self._operation("not", self)
 
 
 class UnresolvedVariable:
