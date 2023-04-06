@@ -30,6 +30,8 @@ define('OPERAND', [
 	'type'	=> 4,
 ]);
 
+// Inštrukčná sada IPPcode23/IFJcode22:
+// https://www.fit.vutbr.cz/study/courses/IFJ/private/projekt/ifj2022.pdf#subsubsection.10.4.1
 /** @var \ArrayObject INSTR Výčet/objekt inštrukcií */
 define('INSTR', [
 	// Inštrukcie programových rámcov
@@ -79,156 +81,246 @@ define('INSTR', [
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var']],
 	],
+	'CLEARS' => [
+		'id'		=> 10,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
 	// Aritmetické a dátové inštrukcie
 	'ADD' => [
-		'id'		=> 10,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
-	],
-	'SUB' => [
 		'id'		=> 11,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'MUL' => [
+	'SUB' => [
 		'id'		=> 12,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'IDIV' => [
+	'MUL' => [
 		'id'		=> 13,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'DIV' => [
 		'id'		=> 14,
-		'ext'	=> true,
+		'ext'	=> true, // FLOAT
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'LT' => [
+	'IDIV' => [
 		'id'		=> 15,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'GT' => [
+	'ADDS' => [
 		'id'		=> 16,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'ext'	=> true, // STACK
+		'argt'	=> [],
 	],
-	'EQ' => [
+	'SUBS' => [
 		'id'		=> 17,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'ext'	=> true, // STACK
+		'argt'	=> [],
 	],
-	'AND' => [
+	'MULS' => [
 		'id'		=> 18,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'ext'	=> true, // STACK
+		'argt'	=> [],
 	],
-	'OR' => [
+	'DIVS' => [
 		'id'		=> 19,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+		'ext'	=> true, // FLOAT + STACK
+		'argt'	=> [],
 	],
-	'NOT' => [
+	'IDIVS' => [
 		'id'		=> 20,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+		'ext'	=> true, // STACK
+		'argt'	=> [],
 	],
-	'INT2CHAR' => [
+	'LT' => [
 		'id'		=> 21,
 		'ext'	=> false,
-		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'STRI2INT' => [
+	'GT' => [
 		'id'		=> 22,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
-	'INT2FLOAT' => [
+	'EQ' => [
 		'id'		=> 23,
-		'ext'	=> true,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+	],
+	'LTS' => [
+		'id'		=> 24,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'GTS' => [
+		'id'		=> 25,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'EQS' => [
+		'id'		=> 26,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'AND' => [
+		'id'		=> 27,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+	],
+	'OR' => [
+		'id'		=> 28,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+	],
+	'NOT' => [
+		'id'		=> 29,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+	],
+	'ANDS' => [
+		'id'		=> 30,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'ORS' => [
+		'id'		=> 31,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'NOTS' => [
+		'id'		=> 32,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'INT2FLOAT' => [
+		'id'		=> 33,
+		'ext'	=> true, // FLOAT
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'FLOAT2INT' => [
-		'id'		=> 24,
-		'ext'	=> true,
+		'id'		=> 34,
+		'ext'	=> true, // FLOAT
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+	],
+	'INT2CHAR' => [
+		'id'		=> 35,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['var'], OPERAND['symb']],
+	],
+	'STRI2INT' => [
+		'id'		=> 36,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
+	],
+	'INT2FLOATS' => [
+		'id'		=> 37,
+		'ext'	=> true, // FLOAT + STACK
+		'argt'	=> [],
+	],
+	'FLOAT2INTS' => [
+		'id'		=> 38,
+		'ext'	=> true, // FLOAT + STACK
+		'argt'	=> [],
+	],
+	'INT2CHARS' => [
+		'id'		=> 39,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
+	],
+	'STRI2INTS' => [
+		'id'		=> 40,
+		'ext'	=> true, // STACK
+		'argt'	=> [],
 	],
 	// Vstupno-výstupné inštrukcie
 	'READ' => [
-		'id'		=> 25,
+		'id'		=> 41,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['type']],
 	],
 	'WRITE' => [
-		'id'		=> 26,
+		'id'		=> 42,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie reťazcov
 	'CONCAT' => [
-		'id'		=> 27,
+		'id'		=> 43,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'STRLEN' => [
-		'id'		=> 28,
+		'id'		=> 44,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	'GETCHAR' => [
-		'id'		=> 29,
+		'id'		=> 45,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'SETCHAR' => [
-		'id'		=> 30,
+		'id'		=> 46,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb'], OPERAND['symb']],
 	],
 	// Inštrukcie typu
 	'TYPE' => [
-		'id'		=> 31,
+		'id'		=> 47,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['var'], OPERAND['symb']],
 	],
 	// Inštrukcie riadenia toku programu
 	'LABEL' => [
-		'id'		=> 32,
+		'id'		=> 48,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['label']],
 	],
 	'JUMP' => [
-		'id'		=> 33,
+		'id'		=> 49,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['label']],
 	],
 	'JUMPIFEQ' => [
-		'id'		=> 34,
+		'id'		=> 50,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
 	'JUMPIFNEQ' => [
-		'id'		=> 35,
+		'id'		=> 51,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['label'], OPERAND['symb'], OPERAND['symb']],
 	],
+	'JUMPIFEQS' => [
+		'id'		=> 52,
+		'ext'	=> true, // STACK
+		'argt'	=> [OPERAND['label']],
+	],
+	'JUMPIFNEQS' => [
+		'id'		=> 53,
+		'ext'	=> true, // STACK
+		'argt'	=> [OPERAND['label']],
+	],
 	'EXIT' => [
-		'id'		=> 36,
+		'id'		=> 54,
 		'ext'	=> false,
 		'argt'	=> [OPERAND['symb']],
 	],
 	// Inštrukcie na ladenie
-	'DPRINT' => [
-		'id'		=> 37,
-		'ext'	=> false,
-		'argt'	=> [OPERAND['symb']],
-	],
 	'BREAK' => [
-		'id'		=> 38,
+		'id'		=> 55,
 		'ext'	=> false,
 		'argt'	=> [],
+	],
+	'DPRINT' => [
+		'id'		=> 56,
+		'ext'	=> false,
+		'argt'	=> [OPERAND['symb']],
 	],
 ]);
 
