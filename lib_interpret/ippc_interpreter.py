@@ -334,6 +334,14 @@ class Interpreter:
 
         opcode_impl["POPS"] = execute_POPS
 
+        def execute_CLEARS():
+            """CLEARS"""
+            check_opcount(0)
+            self.data_stack.clear()
+            _dbgprint_stacktop()
+
+        opcode_impl["CLEARS"] = execute_CLEARS
+
         def execute_ADD():
             """ADD (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
@@ -399,6 +407,56 @@ class Interpreter:
 
         opcode_impl["IDIV"] = execute_IDIV
 
+        def execute_ADDS():
+            """ADDS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 + val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["ADDS"] = execute_ADDS
+
+        def execute_SUBS():
+            """SUBS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 - val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["SUBS"] = execute_SUBS
+
+        def execute_MULS():
+            """MULS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 * val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["MULS"] = execute_MULS
+
+        def execute_DIVS():
+            """DIVS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 / val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["DIVS"] = execute_DIVS
+
+        def execute_IDIVS():
+            """IDIVS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 // val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["IDIVS"] = execute_IDIVS
+
         def execute_LT():
             """LT (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
@@ -438,6 +496,36 @@ class Interpreter:
 
         opcode_impl["EQ"] = execute_EQ
 
+        def execute_LTS():
+            """LTS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 < val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["LTS"] = execute_LTS
+
+        def execute_GTS():
+            """GTS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 > val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["GTS"] = execute_GTS
+
+        def execute_EQS():
+            """EQS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 == val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["EQS"] = execute_EQS
+
         def execute_AND():
             """AND (var)targ (symb)val1 (symb)val2"""
             check_opcount(3)
@@ -476,6 +564,60 @@ class Interpreter:
 
         opcode_impl["NOT"] = execute_NOT
 
+        def execute_ANDS():
+            """ANDS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 & val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["ANDS"] = execute_ANDS
+
+        def execute_ORS():
+            """ORS"""
+            check_opcount(0)
+            check_stacklen(2)
+            val2, val1 = self.data_stack.pop(), self.data_stack.pop()
+            self.data_stack.push(val1 | val2)
+            _dbgprint_stacktop()
+
+        opcode_impl["ORS"] = execute_ORS
+
+        def execute_NOTS():
+            """NOTS"""
+            check_opcount(0)
+            check_stacklen(1)
+            val = self.data_stack.pop()
+            self.data_stack.push(~val)
+            _dbgprint_stacktop()
+
+        opcode_impl["NOTS"] = execute_NOTS
+
+        def execute_INT2FLOAT():
+            """INT2FLOAT (var)targ (symb)val"""
+            check_opcount(2)
+            targ, val = instr.operands
+            validate_operand(targ, "var")
+            validate_operand(val, "symb")
+            val = resolve_symb(val, "int").to_type("float")
+            self.get_frame(targ.frame).set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
+
+        opcode_impl["INT2FLOAT"] = execute_INT2FLOAT
+
+        def execute_FLOAT2INT():
+            """FLOAT2INT (var)targ (symb)val"""
+            check_opcount(2)
+            targ, val = instr.operands
+            validate_operand(targ, "var")
+            validate_operand(val, "symb")
+            val = resolve_symb(val, "float").to_type("int")
+            self.get_frame(targ.frame).set_variable(targ.name, val)
+            _dbgprint_variable(targ, val.pyv())
+
+        opcode_impl["FLOAT2INT"] = execute_FLOAT2INT
+
         def execute_INT2CHAR():
             """INT2CHAR (var)targ (symb)val"""
             check_opcount(2)
@@ -502,29 +644,54 @@ class Interpreter:
 
         opcode_impl["STRI2INT"] = execute_STRI2INT
 
-        def execute_INT2FLOAT():
-            """INT2FLOAT (var)targ (symb)val"""
-            check_opcount(2)
-            targ, val = instr.operands
-            validate_operand(targ, "var")
-            validate_operand(val, "symb")
-            val = resolve_symb(val, "int").to_type("float")
-            self.get_frame(targ.frame).set_variable(targ.name, val)
-            _dbgprint_variable(targ, val.pyv())
+        def execute_INT2FLOATS():
+            """INT2FLOATS"""
+            check_opcount(0)
+            check_stacklen(1)
+            val = self.data_stack.pop()
+            validate_operand(val, "int")
+            val = val.to_type("float")
+            self.data_stack.push(val)
+            _dbgprint_stacktop()
 
-        opcode_impl["INT2FLOAT"] = execute_INT2FLOAT
+        opcode_impl["INT2FLOATS"] = execute_INT2FLOATS
 
-        def execute_FLOAT2INT():
-            """FLOAT2INT (var)targ (symb)val"""
-            check_opcount(2)
-            targ, val = instr.operands
-            validate_operand(targ, "var")
-            validate_operand(val, "symb")
-            val = resolve_symb(val, "float").to_type("int")
-            self.get_frame(targ.frame).set_variable(targ.name, val)
-            _dbgprint_variable(targ, val.pyv())
+        def execute_FLOAT2INTS():
+            """FLOAT2INTS"""
+            check_opcount(0)
+            check_stacklen(1)
+            val = self.data_stack.pop()
+            validate_operand(val, "float")
+            val = val.to_type("int")
+            self.data_stack.push(val)
+            _dbgprint_stacktop()
 
-        opcode_impl["FLOAT2INT"] = execute_FLOAT2INT
+        opcode_impl["FLOAT2INTS"] = execute_FLOAT2INTS
+
+        def execute_INT2CHARS():
+            """INT2CHARS"""
+            check_opcount(0)
+            check_stacklen(1)
+            val = self.data_stack.pop()
+            validate_operand(val, "int")
+            val = val.to_type("string")
+            self.data_stack.push(val)
+            _dbgprint_stacktop()
+
+        opcode_impl["INT2CHARS"] = execute_INT2CHARS
+
+        def execute_STRI2INTS():
+            """STRI2INTS"""
+            check_opcount(0)
+            check_stacklen(2)
+            idx, val = self.data_stack.pop(), self.data_stack.pop()
+            validate_operand(val, "string")
+            validate_operand(idx, "int")
+            val = val.to_type("int", idx.pyv())
+            self.data_stack.push(val)
+            _dbgprint_stacktop()
+
+        opcode_impl["STRI2INTS"] = execute_STRI2INTS
 
         def execute_READ():
             """READ (var)targ (type)ttype"""
@@ -680,6 +847,30 @@ class Interpreter:
             _dbgprint_value(str(dojump).lower())
 
         opcode_impl["JUMPIFNEQ"] = execute_JUMPIFNEQ
+
+        def execute_JUMPIFEQS():
+            """JUMPIFEQS (label)label"""
+            check_opcount(1)
+            label = validate_operand(instr.operands[0], "label")
+            check_stacklen(2)
+            dojump = (self.data_stack.pop() == self.data_stack.pop()).pyv()
+            if dojump:
+                self.program_counter = self.labels[label.name]
+            _dbgprint_value(str(dojump).lower())
+
+        opcode_impl["JUMPIFEQS"] = execute_JUMPIFEQS
+
+        def execute_JUMPIFNEQS():
+            """JUMPIFNEQS (label)label"""
+            check_opcount(1)
+            label = validate_operand(instr.operands[0], "label")
+            check_stacklen(2)
+            dojump = (self.data_stack.pop() != self.data_stack.pop()).pyv()
+            if dojump:
+                self.program_counter = self.labels[label.name]
+            _dbgprint_value(str(dojump).lower())
+
+        opcode_impl["JUMPIFNEQS"] = execute_JUMPIFNEQS
 
         def execute_EXIT():
             """EXIT (symb)val"""
