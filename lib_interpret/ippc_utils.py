@@ -185,22 +185,22 @@ class Value:
                 return Value("int", int(x))
             if tx == "string":
                 if not isinstance(idx, int):
-                    raise TypeError(f"Missing index")
+                    raise TypeError("Missing index")
                 sx = str(self)
                 if idx < 0 or idx >= len(sx):
-                    raise NameError(f"Index out of bounds")
+                    raise NameError("Index out of bounds")
                 try:
                     return Value("int", str(ord(sx[idx])))
                 except IndexError:
-                    raise NameError(f"Invalid index")
-            raise TypeError(f"Invalid type conversion")
+                    raise NameError("Invalid index")
+            raise TypeError("Invalid type conversion")
 
         def _to_float():
             if tx == "int":
                 return Value("float", float(x).hex())
             if tx == "float":
                 return self
-            raise TypeError(f"Invalid type conversion")
+            raise TypeError("Invalid type conversion")
 
         def _to_string():
             if tx == "int":
@@ -213,12 +213,12 @@ class Value:
                     return self
                 sx = str(self)
                 if idx < 0 or idx >= len(sx):
-                    raise NameError(f"Index out of bounds")
+                    raise NameError("Index out of bounds")
                 try:
                     return Value("string", sx[idx])
                 except IndexError:
-                    raise NameError(f"Invalid index")
-            raise TypeError(f"Invalid type conversion")
+                    raise NameError("Invalid index")
+            raise TypeError("Invalid type conversion")
 
         if ty == "int":
             return _to_int()
@@ -226,7 +226,7 @@ class Value:
             return _to_float()
         if ty == "string":
             return _to_string()
-        raise TypeError(f"Invalid type conversion")
+        raise TypeError("Invalid type conversion")
 
     def _operation(self, op, other):
         tx, ty = self.type, other.type
@@ -241,7 +241,7 @@ class Value:
         if op in ("and", "or", "not") and (tx != "bool"):
             raise TypeError("Unexpected operand type")
         if tx != ty:
-            raise TypeError(f"Unequal operand types")
+            raise TypeError("Unequal operand types")
         if (op == "div" or op == "idiv") and y == 0:
             raise ValueError("Zero division")
 

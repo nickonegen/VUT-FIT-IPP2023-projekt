@@ -219,7 +219,7 @@ class Interpreter:
 
         def check_stacklen(size: int) -> bool:
             if self.data_stack.size() < size:
-                raise IndexError(f"Stack underflow")
+                raise IndexError("Stack underflow")
             return True
 
         def _dbgprint_variable(var: UnresolvedVariable, val: any):
