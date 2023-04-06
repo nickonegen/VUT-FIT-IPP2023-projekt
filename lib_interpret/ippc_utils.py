@@ -242,7 +242,7 @@ class Value:
             raise TypeError("Unexpected operand type")
         if tx != ty:
             raise TypeError("Unequal operand types")
-        if (op == "div" or op == "idiv") and y == 0:
+        if op in ("div", "idiv") and y == 0:
             raise ValueError("Zero division")
 
         if op == "add":
