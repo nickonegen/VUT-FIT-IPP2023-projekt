@@ -1,0 +1,34 @@
+.IPPcode23
+##
+# Vykreslí 4x4 štvorček.
+##
+
+DEFVAR GF@size
+DEFVAR GF@rowno
+DEFVAR GF@colno
+DEFVAR GF@chkline
+DEFVAR GF@chkloop
+
+MOVE   GF@size    int@4
+MOVE   GF@rowno   int@0
+MOVE   GF@colno   int@0
+MOVE   GF@chkline bool@false
+MOVE   GF@chkloop bool@false
+
+LABEL  loop_start
+     # Riadok
+     MOVE  GF@colno int@0
+     LABEL line_loop
+          WRITE    string@\042
+          ADD      GF@colno    GF@colno   int@1
+          LT       GF@chkline  GF@colno   GF@size
+          JUMPIFEQ line_loop   GF@chkline bool@true
+    
+     WRITE string@\010
+    
+     # Podmienka
+     ADD      GF@rowno   GF@rowno   int@1
+     LT       GF@chkloop GF@rowno   GF@size
+     JUMPIFEQ loop_start GF@chkloop bool@true
+
+EXIT int@0

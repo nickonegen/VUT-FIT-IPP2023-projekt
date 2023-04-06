@@ -1,0 +1,45 @@
+.IPPcode23
+##
+# Palindrome checker
+#
+# @note: Potreboval som niečo na otestovanie reťazcových
+#         inštrukcií, takže pri implementácií som skôr
+#         chcel využiť čo najviac inštrukcii. 
+#           TL;DR: schválne neoptimálne
+##
+
+DEFVAR     GF@in  # Vstupný reťazec
+DEFVAR     GF@ln  # Dĺžka reťazca
+DEFVAR     GF@li  # Ľavý index
+DEFVAR     GF@lc  # Ľavý znak
+DEFVAR     GF@ri  # Pravý index
+DEFVAR     GF@rc  # Pravý znak
+DEFVAR     GF@end # Koniec cyklu
+
+# Vstup
+READ       GF@in     string
+STRLEN     GF@ln     GF@in
+
+# Premenné
+MOVE       GF@li     int@0
+SUB        GF@ri     GF@ln     int@1
+
+# Cyklus
+LABEL      cyklus
+    GT         GF@end     GF@li     GF@ri
+    JUMPIFEQ   cyklus%end GF@li     GF@ri
+    GETCHAR    GF@lc      GF@in     GF@li
+    STRI2INT   GF@lc      GF@lc     int@0
+    GETCHAR    GF@rc      GF@in     GF@ri
+    STRI2INT   GF@rc      GF@rc     int@0
+    JUMPIFNEQ  cyklus%not GF@lc     GF@rc
+    ADD        GF@li      GF@li     int@1
+    SUB        GF@ri      GF@ri     int@1
+    JUMP       cyklus
+    LABEL      cyklus%not
+    CONCAT     GF@in      GF@in     string@\032NIE
+    LABEL      cyklus%end
+
+CONCAT     GF@in      GF@in     string@\032JE\032palindróm.
+WRITE      GF@in
+EXIT       int@0

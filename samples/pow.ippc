@@ -1,0 +1,37 @@
+.IPPcode23
+##
+# Výpočet mocniny (mega-simple, bez STACK)
+##
+
+DEFVAR     GF@zak
+DEFVAR     GF@exp
+DEFVAR     GF@%r
+DEFVAR     GF@t
+MOVE 	 GF@%r     int@1
+
+# Načítanie vstupu
+READ       GF@zak    int
+READ       GF@exp    int
+
+# Kontrola vstupu
+TYPE       GF@t      GF@zak
+JUMPIFNEQ  $inerr    GF@t      string@int
+TYPE       GF@t      GF@exp
+JUMPIFNEQ  $inerr    GF@t      string@int
+
+# Výpočet
+LABEL      $loop
+JUMPIFEQ   $loopend  GF@exp    int@0
+MUL        GF@%r     GF@%r     GF@zak
+SUB        GF@exp    GF@exp    int@1
+JUMP       $loop
+LABEL      $loopend
+
+# Výpis výsledku
+WRITE      string@Vysledok:\032
+WRITE      GF@%r
+EXIT       int@0
+
+LABEL 	 $inerr
+WRITE      string@Chybny\032vstup!
+EXIT       int@1

@@ -1,0 +1,70 @@
+.IPPcode23
+##
+#
+# Implementácia funkcií deg2rad a rad2deg
+#
+##
+
+DEFVAR     GF@pi
+MOVE       GF@pi     float@0x1.921fb54442d18p+1
+
+CALL       main
+EXIT       int@0
+
+LABEL      deg2rad
+    # deg2rad -- prevod uhlu na radiány
+    #   Vstup:
+    #       stack: uhly (int)
+    #   Výsledok:
+    #       TF@%r: výsledné radiány (float)
+    CREATEFRAME
+    PUSHFRAME
+    DEFVAR     LF@%r
+    DEFVAR     LF@ang
+    POPS       LF@ang
+    INT2FLOAT  LF@%r     LF@ang
+    MUL        LF@%r     LF@%r     GF@pi
+    PUSHS      LF@%r
+    PUSHS      int@180
+    INT2FLOATS
+    DIVS
+    POPS       LF@%r
+    POPFRAME
+RETURN
+
+LABEL      rad2deg
+    # rad2deg -- prevod radiánov na uhly
+    #   Vstup:
+    #       stack: radiány (float)
+    #   Výsledok:
+    #       TF@%r: výsledný uhol (int)
+    CREATEFRAME
+    PUSHFRAME
+    DEFVAR     LF@%r
+    PUSHS      int@180
+    INT2FLOATS
+    MULS
+    PUSHS      GF@pi
+    DIVS
+    FLOAT2INTS
+    POPS       LF@%r
+    POPFRAME
+RETURN
+
+LABEL      main
+    CREATEFRAME
+    PUSHFRAME
+    DEFVAR     LF@%r
+    READ       LF@%r     int
+    PUSHS      LF@%r
+    CALL       deg2rad
+    MOVE       LF@%r     TF@%r
+    WRITE      string@Na\032radiany:\032
+    WRITE      LF@%r
+    PUSHS      LF@%r
+    CALL       rad2deg
+    MOVE       LF@%r     TF@%r
+    WRITE      string@\010Spat\032na\032stupne:\032
+    WRITE      LF@%r
+    POPFRAME
+RETURN
