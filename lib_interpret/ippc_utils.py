@@ -272,8 +272,7 @@ class Value:
 
         if self.type == "int" and op != "div":
             return Value("int", str(result))
-        else:
-            return Value("float", float(result).hex())
+        return Value("float", float(result).hex())
 
     def __add__(self, other):
         return self._operation("add", other)
