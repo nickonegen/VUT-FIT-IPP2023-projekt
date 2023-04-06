@@ -1,0 +1,47 @@
+.IPPcode23
+##
+#
+# Fibonacciho postupnosť
+#
+# @see: https://www.programiz.com/c-programming/examples/fibonacci-series
+#
+##
+
+# Počet prvkov
+DEFVAR     GF@n
+READ       GF@n      int
+
+DEFVAR     GF@nchk
+TYPE       GF@nchk   GF@n
+JUMPIFEQ   chkdone   GF@nchk   string@int
+MOVE       GF@n      int@5
+LABEL      chkdone
+
+DEFVAR     GF@t1
+DEFVAR     GF@t2
+DEFVAR     GF@tn
+MOVE       GF@t1     int@0
+MOVE       GF@t2     int@1
+ADD        GF@tn     GF@t1     GF@t2
+WRITE      string@Fibonacciho\032postupnost\058\032
+WRITE      GF@t1
+WRITE      string@\044\032
+WRITE      GF@t2
+WRITE      string@\044\032
+
+DEFVAR     GF@i
+DEFVAR     GF@cond
+MOVE       GF@i      int@3
+LABEL      loop
+ADD        GF@i      GF@i      int@1
+WRITE      GF@tn
+WRITE      string@\044\032
+MOVE       GF@t1     GF@t2
+MOVE       GF@t2     GF@tn
+ADD        GF@tn     GF@t1     GF@t2
+GT         GF@cond   GF@i      GF@n
+JUMPIFEQ   loop      GF@cond   bool@false
+WRITE      string@\046\046\046
+EXIT       int@0
+
+

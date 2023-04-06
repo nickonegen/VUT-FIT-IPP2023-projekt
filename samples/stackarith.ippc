@@ -1,0 +1,35 @@
+.IPPcode23
+##
+# Skúšobný aritmetický výpočet s použitím STACK rozšírenia.
+#
+# x = pole[0]^2 + pole[1] + pole[2]/(-2 * pole[3])
+#
+# @see: https://github.com/nickonegen/VUT-FIT-ISU2022-cvicenia/blob/main/cv04_pr02.asm
+# @note: výsledok by mal byť 69
+##
+
+DEFVAR GF@pole0
+DEFVAR GF@pole1
+DEFVAR GF@pole2
+DEFVAR GF@pole3
+MOVE   GF@pole0  int@8
+MOVE   GF@pole1  int@6
+MOVE   GF@pole2  int@4
+MOVE   GF@pole3  int@2
+
+PUSHS  GF@pole0         # pole0
+PUSHS  GF@pole0         # pole0  pole0
+MULS                    # RES
+PUSHS  GF@pole1         # pole1  RES
+ADDS                    # RES
+PUSHS  GF@pole2         # pole2  RES
+PUSHS  GF@pole3         # pole3  pole2  RES
+PUSHS  int@-2           # -2     pole3  pole2  RES
+MULS                    # MUL1   pole2  RES
+IDIVS                   # DIV1   RES
+ADDS                    # RES
+
+DEFVAR GF@res
+POPS   GF@res
+WRITE  GF@res
+EXIT   int@0

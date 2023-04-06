@@ -1,0 +1,59 @@
+.IPPcode23
+##
+# Výpočet faktoriálu.
+#
+# @note: na faktoriál je osobitná "funkcia" nech sa odskúšajú
+# 	    frame-y a zásobník
+##
+
+CALL 	 main
+EXIT 	 int@0
+
+LABEL      factorial
+    # factorial -- výpočet faktoriálu
+    #   Vstup:
+    #       stack: číslo (int)
+    #   Výsledok:
+    #       TF@%r: výsledok (int)
+    CREATEFRAME
+    PUSHFRAME
+    DEFVAR     LF@z
+    DEFVAR     LF@%r
+    DEFVAR     LF@i
+    POPS       LF@z
+    MOVE       LF@%r     int@1
+    MOVE       LF@i      int@1
+    LABEL      factorial_loop
+        MUL        LF@%r     LF@%r     LF@i
+        ADD        LF@i      LF@i      int@1
+        PUSHS      LF@i
+        PUSHS      LF@z
+        GTS
+        PUSHS      bool@false
+        JUMPIFEQS  factorial_loop
+    POPFRAME
+RETURN
+
+LABEL      main
+    CREATEFRAME
+    PUSHFRAME
+    DEFVAR     LF@%r
+    DEFVAR     LF@in
+    DEFVAR     LF@tin
+
+    READ       LF@in    int
+    TYPE       LF@tin   LF@in
+    EQ         LF@tin   LF@tin   string@int
+    JUMPIFEQ   main%ok  LF@tin   bool@true
+    WRITE      string@Chyba\032vstupu!
+    EXIT       int@1
+    LABEL main%ok
+
+    PUSHS      LF@in
+    CALL       factorial
+    MOVE       LF@%r     TF@%r
+    WRITE      string@Vysledok:\032
+    WRITE      LF@%r
+
+    POPFRAME
+RETURN
