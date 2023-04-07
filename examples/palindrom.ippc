@@ -1,7 +1,8 @@
 .IPPcode23
 ##
 #
-# Detektor palindrómov
+# Rozpoznávač palindrómov
+# @requires: <žiadne rozšírenia>
 #
 ##
 

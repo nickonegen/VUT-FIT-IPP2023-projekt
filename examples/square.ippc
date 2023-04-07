@@ -1,6 +1,10 @@
 .IPPcode23
 ##
+#
 # Vykreslí 4x4 štvorček.
+# @requires: <žiadne rozšírenia>
+# @see: https://github.com/nickonegen/VUT-FIT-ISU2022-cvicenia/blob/main/cv07_pr03.asm
+#
 ##
 
 DEFVAR GF@size

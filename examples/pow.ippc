@@ -1,7 +1,8 @@
 .IPPcode23
 ##
 #
-# Výpočet mocniny (as simple as possible a bez STACK)
+# Výpočet mocniny
+# @requires: <žiadne rozšírenia>
 #
 ##
 
