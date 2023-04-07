@@ -1,9 +1,8 @@
 .IPPcode23
 ##
+#
 # Výpočet faktoriálu.
 #
-# @note: na faktoriál je osobitná "funkcia" nech sa odskúšajú
-# 	    frame-y a zásobník
 ##
 
 CALL 	 main
@@ -19,10 +18,10 @@ LABEL      factorial
     PUSHFRAME
     DEFVAR     LF@z
     DEFVAR     LF@%r
-    DEFVAR     LF@i
-    POPS       LF@z
     MOVE       LF@%r     int@1
+    DEFVAR     LF@i
     MOVE       LF@i      int@1
+    POPS       LF@z
     LABEL      factorial_loop
         MUL        LF@%r     LF@%r     LF@i
         ADD        LF@i      LF@i      int@1
@@ -45,14 +44,14 @@ LABEL      main
     TYPE       LF@tin   LF@in
     EQ         LF@tin   LF@tin   string@int
     JUMPIFEQ   main%ok  LF@tin   bool@true
-    WRITE      string@Chyba\032vstupu!
+    WRITE      string@Chyba\032vstupu\033
     EXIT       int@1
-    LABEL main%ok
+    LABEL      main%ok
 
     PUSHS      LF@in
     CALL       factorial
     MOVE       LF@%r     TF@%r
-    WRITE      string@Vysledok:\032
+    WRITE      string@Vysledok\058\032
     WRITE      LF@%r
 
     POPFRAME
