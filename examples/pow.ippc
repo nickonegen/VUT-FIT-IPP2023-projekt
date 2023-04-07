@@ -1,6 +1,8 @@
 .IPPcode23
 ##
-# Výpočet mocniny (mega-simple, bez STACK)
+#
+# Výpočet mocniny (as simple as possible a bez STACK)
+#
 ##
 
 DEFVAR     GF@zak
@@ -21,10 +23,10 @@ JUMPIFNEQ  $inerr    GF@t      string@int
 
 # Výpočet
 LABEL      $loop
-JUMPIFEQ   $loopend  GF@exp    int@0
-MUL        GF@%r     GF@%r     GF@zak
-SUB        GF@exp    GF@exp    int@1
-JUMP       $loop
+	JUMPIFEQ   $loopend  GF@exp    int@0
+	MUL        GF@%r     GF@%r     GF@zak
+	SUB        GF@exp    GF@exp    int@1
+	JUMP       $loop
 LABEL      $loopend
 
 # Výpis výsledku

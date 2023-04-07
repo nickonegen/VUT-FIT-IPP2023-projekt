@@ -1,7 +1,7 @@
 .IPPcode23
 ##
 #
-# Implementácia funkcií deg2rad a rad2deg
+# Prevodník stupňou na radiány (deg2rad) a naopak (rad2deg)
 #
 ##
 
