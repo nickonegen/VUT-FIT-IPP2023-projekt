@@ -12,7 +12,7 @@ Zadanie: [ZADANI.pdf](ZADANI.pdf), originál [MOODLE PDF](https://moodle.vut.cz/
 
 ## Časť 1 (`parse.php`)
 
-Hodnotenie: 8,8 / 8<br>（testy 95%, STATP 80%, docs 80%）
+Hodnotenie: 9 / 8
 
 ### TODO-List
 
@@ -41,6 +41,7 @@ Hodnotenie: ?? / 12<br>（?）
 ### Môže sa hodiť
 
 - [ipp-2023-tests.zip (Sigu)](https://discord.com/channels/461541385204400138/712627564992004146/1085869237052125224)
+- btw [rippi](https://pastebin.com/kAu1z5kU) je len spúštací skriptík pre seba
 
 ----------------------------------------------
 

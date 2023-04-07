@@ -23,5 +23,8 @@ testanlys.out
 is_it_ok.sh
 testdir/**
 x???????/**
-**.zip
 **-private**
+readme?.md
+**.sh.x.c
+**.zip
+**.sh
