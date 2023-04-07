@@ -1,7 +1,8 @@
 .IPPcode23
 ##
 #
-# Výpočet faktoriálu.
+# Výpočet faktoriálu
+# @requires: STACK rozšírenie
 #
 ##
 

@@ -2,6 +2,7 @@
 ##
 #
 # Prevodník stupňou na radiány (deg2rad) a naopak (rad2deg)
+# @requires: STACK, FLOAT rozšírenia
 #
 ##
 

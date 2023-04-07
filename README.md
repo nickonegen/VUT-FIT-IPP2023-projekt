@@ -41,7 +41,6 @@ Hodnotenie: ?? / 12<br>（?）
 ### Môže sa hodiť
 
 - [ipp-2023-tests.zip (Sigu)](https://discord.com/channels/461541385204400138/712627564992004146/1085869237052125224)
-- btw [rippi](https://pastebin.com/kAu1z5kU) je len spúštací skriptík pre seba
 
 ----------------------------------------------
 

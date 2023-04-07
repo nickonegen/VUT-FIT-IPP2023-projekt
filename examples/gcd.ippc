@@ -1,0 +1,139 @@
+.IPPcode23
+##
+#
+# Najväčší spoločný deliteľ
+# @requires: <žiadne rozšírenia>
+# @see: https://www.geeksforgeeks.org/program-to-find-gcd-or-hcf-of-two-numbers/
+#
+##
+
+CALL       main
+EXIT       int@0
+
+LABEL      gcd
+# gcd -- najväčší spoločný deliteľ
+#  Vstup:
+#    stack[0] -- prvý člen
+#    stack[1] -- druhý člen
+#  Výstup:
+#    stack[0] -- výsledok
+        CREATEFRAME
+        PUSHFRAME
+        DEFVAR          LF@a
+        DEFVAR          LF@b
+        DEFVAR          LF@%r
+        POPS            LF@b
+        POPS            LF@a
+        # %r = min(a, b)
+        PUSHS           LF@a
+        PUSHS           LF@b
+        CALL            mins
+        POPS            LF@%r
+        # while (%r > 0) { ...
+        DEFVAR          LF@cnd1
+        DEFVAR          LF@cnd2
+        LABEL           gcd%cyc
+                GT              LF@cnd1         LF@%r           int@0
+                JUMPIFEQ        gcd%end         LF@cnd1         bool@false
+                # if ((a % result == 0) && (b % result == 0)) break
+                PUSHS           LF@a
+                PUSHS           LF@%r
+                CALL            mods
+                POPS            LF@cnd1
+                EQ              LF@cnd1         LF@cnd1         int@0
+                PUSHS           LF@b
+                PUSHS           LF@%r
+                CALL            mods
+                POPS            LF@cnd2
+                EQ              LF@cnd2         LF@cnd2         int@0
+                AND             LF@cnd2         LF@cnd1         LF@cnd2
+                JUMPIFEQ        gcd%end         LF@cnd2         bool@true
+                # result--
+                SUB             LF@%r           LF@%r           int@1
+                JUMP            gcd%cyc
+        LABEL           gcd%end
+        PUSHS           LF@%r
+        POPFRAME
+RETURN
+
+
+LABEL   mins
+# mins -- výpočet minima
+# Vstup:
+#   stack[1] -- (int) číslo 1
+#   stack[0] -- (int) číslo 2
+# Výstup:
+#   stack[0] -- (int) menšia hodnota
+        CREATEFRAME
+        PUSHFRAME
+        DEFVAR          LF@a
+        DEFVAR          LF@b
+        POPS            LF@b
+        POPS            LF@a
+        DEFVAR          LF@cmp
+        LT              LF@cmp          LF@a            LF@b
+        JUMPIFEQ        mins%false      LF@cmp          bool@false
+        # a < b
+        LABEL           mins%true
+                PUSHS           LF@a
+                JUMP            mins%endif
+        # b < a
+        LABEL           mins%false
+                PUSHS           LF@b
+        LABEL           mins%endif
+        POPFRAME
+RETURN
+
+
+LABEL   mods
+# mins -- výpočet minima
+# Vstup:
+#   stack[1] -- (int) delenec
+#   stack[0] -- (int) deliteľ
+# Výstup:
+#   stack[0] -- (int) modulus
+        CREATEFRAME
+        PUSHFRAME
+        DEFVAR          LF@a
+        DEFVAR          LF@n
+        DEFVAR          LF@cnd
+        POPS            LF@n
+        POPS            LF@a
+        LABEL           mods%cyc
+                LT              LF@cnd          LF@a            LF@n
+                JUMPIFEQ        mods%end        LF@cnd          bool@true
+                SUB             LF@a            LF@a            LF@n
+                JUMP            mods%cyc
+                LABEL           mods%end
+        PUSHS           LF@a
+        POPFRAME
+RETURN
+
+LABEL   main
+        CREATEFRAME
+        PUSHFRAME
+        DEFVAR          LF@a
+        DEFVAR          LF@b
+        DEFVAR          LF@tmp
+        # Vstup
+        READ            LF@a            int
+        READ            LF@b            int
+        TYPE            LF@tmp          LF@a
+        JUMPIFNEQ       m%badin         LF@tmp          string@int
+        TYPE            LF@tmp          LF@b
+        JUMPIFNEQ       m%badin         LF@tmp          string@int
+        JUMP            m%ok_in
+        # Zlý vstup
+        LABEL           m%badin
+                WRITE           string@Chybny\032vstup!
+                EXIT            int@1
+        LABEL           m%ok_in
+        DEFVAR          LF@res
+        PUSHS           LF@a
+        PUSHS           LF@b
+        CALL            gcd
+        POPS            LF@res
+        WRITE           string@Vysledok:\032
+        WRITE           LF@res
+        POPFRAME
+RETURN

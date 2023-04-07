@@ -1,11 +1,13 @@
 .IPPcode23
 ##
-# Skúšobný aritmetický výpočet s použitím STACK rozšírenia.
 #
+# Skúšobný aritmetický výpočet s použitím STACK rozšírenia.
 # x = pole[0]^2 + pole[1] + pole[2]/(-2 * pole[3])
 #
+# @requires: STACK rozšírenie
 # @see: https://github.com/nickonegen/VUT-FIT-ISU2022-cvicenia/blob/main/cv04_pr02.asm
 # @note: výsledok by mal byť 69
+#
 ##
 
 DEFVAR GF@pole0

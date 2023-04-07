@@ -2,6 +2,8 @@
 ##
 #
 # Fibonacciho postupnosť
+# @requires: <žiadne rozšírenia>
+# @see: https://www.programiz.com/c-programming/examples/fibonacci-series
 #
 ##
 
@@ -17,7 +19,6 @@ MOVE       GF@n      int@5
 LABEL      chkdone
 
 # Výpočet Fibonacciho postupnosti
-# @see: https://www.programiz.com/c-programming/examples/fibonacci-series
 DEFVAR     GF@t1
 DEFVAR     GF@t2
 DEFVAR     GF@tn
