@@ -51,17 +51,17 @@ class Stack:
         """Dotaz na prázdnosť zásobníka"""
         return len(self._items) == 0
 
-    def push(self, item: any):
+    def push(self, item):
         """Pridá položku na vrchol zásobníka"""
         self._items.append(item)
 
-    def pop(self) -> any:
+    def pop(self):
         """Odoberie a vráti položku z vrcholu zásobníka (prádzny -> EINT)"""
         if not self.is_empty():
             return self._items.pop()
         raise IndexError("Cannot access empty stack")
 
-    def top(self) -> any:
+    def top(self):
         """Vráti položku na vrchole zásobníka (prázdny -> None)"""
         if not self.is_empty():
             return self._items[-1]
@@ -91,17 +91,17 @@ class Queue:
         """Dotaz na prázdnosť fronty"""
         return len(self._items) == 0
 
-    def enqueue(self, item: any):
+    def enqueue(self, item):
         """Pridá položku na koniec fronty"""
         self._items.append(item)
 
-    def dequeue(self) -> any:
+    def dequeue(self):
         """Odoberie a vráti položku zo začiatku fronty (prázdny -> EINT)"""
         if not self.is_empty():
             return self._items.pop(0)
         raise IndexError("Cannot access empty queue")
 
-    def top(self) -> any:
+    def top(self):
         """Vráti položku na začiatku fronty (prázdny -> None)"""
         if not self.is_empty():
             return self._items[0]
@@ -124,7 +124,7 @@ class Value:
         TypeError: pokiaľ je hodnota a typ nekompatibilné
     """
 
-    def __init__(self, value_type: str, value_raw: str | None):
+    def __init__(self, value_type: str, value_raw):
         self.type: str = value_type
         self.raw: str = f"{value_type}@{value_raw}"
         self.content: int | bool | str | float | None = value_raw
@@ -405,7 +405,7 @@ class Instruction:
 
     def __init__(self, opcode, operands):
         self.opcode: str = opcode
-        self.operands: list[Value | UnresolvedVariable | LabelArg] = operands
+        self.operands = operands
 
     def __repr__(self):
         operands = " ".join(
@@ -416,7 +416,7 @@ class Instruction:
         )
         return f"{self.opcode} {operands}"
 
-    def replace_operand(self, index: int, value: Value | UnresolvedVariable | LabelArg):
+    def replace_operand(self, index: int, value):
         """Nahradí operand inštrukcie na danom indexe"""
         self.operands[index] = value
 
