@@ -69,10 +69,10 @@ class Interpreter:
 
         return "\n".join(lines)
 
-    def parse_xml(self, xml_str: str):
+    def parse_xml(self, xml_str):
         """Spracuje XML reprezentácie programu"""
 
-        def parse_operand(arg_elm: ET.Element) -> Value | UnresolvedVariable | LabelArg:
+        def parse_operand(arg_elm):
             type_mapping = {
                 "int": Value,
                 "string": Value,
@@ -89,11 +89,11 @@ class Interpreter:
                 raise KeyError(f"Invalid argument type {arg_type}")
             return constructor(arg_type, arg_elm.text)
 
-        def validate_xml_root(xml: ET.Element) -> None:
+        def validate_xml_root(xml):
             if xml.tag != "program" or xml.attrib["language"] != "IPPcode23":
                 raise KeyError("Invalid XML root element")
 
-        def parse_xml_element(instr_elm: ET.Element) -> tuple[int, Instruction]:
+        def parse_xml_element(instr_elm):
             """Spracuje jeden element (inštrukciu) XML reprezentácie"""
             if instr_elm.tag != "instruction":
                 raise KeyError(f"Unexpected element {instr_elm.tag}")
@@ -134,7 +134,7 @@ class Interpreter:
                     raise KeyError(f"Duplicate label {label_name}")
                 self.labels[label_name] = len(self.instructions) - 1
 
-    def peek_instruction(self) -> Instruction | None:
+    def peek_instruction(self):
         """Vráti inštrukciu, ktorá bude spracovaná ďalšia"""
         if len(self.instructions) <= self.program_counter:
             return None
@@ -144,31 +144,31 @@ class Interpreter:
         """Zapne výpisovanie všetkých inštrukcií"""
         self._verbose = True
 
-    def get_frame(self, name: str) -> Frame:
+    def get_frame(self, name: str):
         """Vráti dátový rámec podľa názvu"""
         frame = None
-        match name.upper():
-            case "GF":
-                frame = self.frames["global"]
-            case "TF":
-                frame = self.frames["temporary"]
-                if frame is None:
-                    raise MemoryError("Attempt to access non-existent TF")
-            case "LF":
-                frame = self.frame_stack.top()
-                if frame is None:
-                    raise MemoryError("Attempt to access non-existent LF")
-            case "_":
-                raise AttributeError("Invalid frame name")
+        nameu = name.upper()
+        if nameu == "GF":
+            frame = self.frames["global"]
+        elif nameu == "TF":
+            frame = self.frames["temporary"]
+            if frame is None:
+                raise MemoryError("Attempt to access non-existent TF")
+        elif nameu == "LF":
+            frame = self.frame_stack.top()
+            if frame is None:
+                raise MemoryError("Attempt to access non-existent LF")
+        else:
+            raise AttributeError("Invalid frame name")
 
         if frame is None:
             raise AttributeError("Invalid frame name")
         return frame
 
-    def execute_next(self) -> int | None:
+    def execute_next(self):
         """Vykoná jednu inštrukciu a vráti jej prípadnú návratovú hodnotu"""
 
-        def validate_operand(operand, expected_type: str) -> any:
+        def validate_operand(operand, expected_type: str):
             if operand is None:
                 raise RuntimeError(f"Unresolvable operand {operand}")
 
@@ -196,9 +196,7 @@ class Interpreter:
                 return operand
             raise RuntimeError(f"Unresolvable operand {operand}")
 
-        def resolve_symb(
-            symb: Value | UnresolvedVariable, expected_type="value"
-        ) -> Value:
+        def resolve_symb(symb, expected_type="value"):
             result = None
             if isinstance(symb, Value):
                 result = symb
@@ -222,13 +220,13 @@ class Interpreter:
                 raise IndexError("Stack underflow")
             return True
 
-        def _dbgprint_variable(var: UnresolvedVariable, val: any):
+        def _dbgprint_variable(var, val):
             if self._verbose:
                 print(
                     f"    \033[32m{var.frame}@\033[0m{var.name} = \033[33m{val}\033[0m"
                 )
 
-        def _dbgprint_value(val: any):
+        def _dbgprint_value(val):
             if self._verbose:
                 print(f"    \033[33m{val}\033[0m")
 
