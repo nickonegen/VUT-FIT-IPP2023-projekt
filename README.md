@@ -35,12 +35,13 @@ Hodnotenie: ?? / 12<br>（?）
 - [X] ⏰ 2023-02-08 **Zadanie**
 - [X] ⏰ 2023-02-14 **Fixácia zadania**
 - [X] ⏰ 2023-02-20 **Registrácia na projekt**
-- [ ] ⏰ 2023-04-11 **Pokusné odovzdanie**
+- [X] ⏰ 2023-04-11 **Pokusné odovzdanie**
 - [ ] ⏰ 2023-04-18 **Deadline**
 
 ### Môže sa hodiť
 
-- [ipp-2023-tests.zip (Sigu)](https://discord.com/channels/461541385204400138/712627564992004146/1085869237052125224)
+- [Tests for both (Sigu)](https://discord.com/channels/461541385204400138/712627564992004146/1085869237052125224)
+- [Interpret-Tests (Nevos)](https://github.com/Nevos07/IPP_interpret-only_test_2023)
 
 ----------------------------------------------
 
