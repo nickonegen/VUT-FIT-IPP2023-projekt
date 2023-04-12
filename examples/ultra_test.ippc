@@ -1,0 +1,322 @@
+.IPPcode23
+##
+#
+# Test na všeličo možné, prepis jedného z testov do IPPcode23
+# @see: https://github.com/Nevos07/IPP_interpret-only_test_2023/blob/main/ultra_test.src
+#
+# input očakáva jedno číslo (počet iterácií)
+#
+##
+
+DEFVAR	GF@testcount
+MOVE		GF@testcount	int@1
+WRITE	string@Aritmetika\010
+DEFVAR	GF@add
+DEFVAR	GF@sub
+DEFVAR	GF@mul
+DEFVAR	GF@div
+DEFVAR	GF@a
+MOVE		GF@a		int@10
+DEFVAR	GF@b
+MOVE		GF@b		int@5
+ADD		GF@add	GF@a		GF@b
+SUB		GF@sub	GF@a		GF@b
+MUL		GF@mul	GF@a		GF@b
+IDIV		GF@div	GF@a		GF@b
+CREATEFRAME
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	int@15
+MOVE		TF@testB	GF@add
+PUSHFRAME
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	int@5
+MOVE		TF@testB	GF@sub
+PUSHFRAME
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	int@50
+MOVE		TF@testB	GF@mul
+PUSHFRAME
+CALL		test
+CREATEFRAME
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	int@2
+MOVE		TF@testB	GF@div
+PUSHFRAME	
+CALL		test
+DEFVAR	GF@lt
+DEFVAR	GF@gt
+DEFVAR	GF@eq
+DEFVAR	GF@and
+DEFVAR	GF@or
+DEFVAR	GF@not
+WRITE	string@Logika\032-\032int\010
+MOVE		GF@a		int@10
+MOVE		GF@b		int@5
+LT		GF@lt	GF@a		GF@b
+GT		GF@gt	GF@a		GF@b
+EQ		GF@eq	GF@a		GF@b
+CREATEFRAME
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@lt
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@gt
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@eq
+PUSHFRAME	
+CALL		test
+MOVE		GF@b		int@10
+EQ		GF@eq	GF@a		GF@b
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@eq
+PUSHFRAME	
+CALL		test
+WRITE	string@Logika\032-\032string\010
+MOVE		GF@a		string@aaaaa
+MOVE		GF@b		string@aaa
+LT		GF@lt	GF@a		GF@b
+GT		GF@gt	GF@a		GF@b
+EQ		GF@eq	GF@a		GF@b
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@lt
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@gt
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@eq
+PUSHFRAME	
+CALL		test
+MOVE		GF@b	string@aaaaa
+EQ		GF@eq	GF@a		GF@b
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@eq
+PUSHFRAME	
+CALL		test
+WRITE	string@Logika\032-\032bool\010
+MOVE		GF@a		bool@true
+MOVE		GF@b		bool@false
+LT		GF@lt	GF@a		GF@b
+GT		GF@gt	GF@a		GF@b
+EQ		GF@eq	GF@a		GF@b
+AND		GF@and	GF@a		GF@b
+OR		GF@or	GF@a		GF@b
+NOT		GF@not	GF@b
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@lt
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@gt
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@eq
+PUSHFRAME	
+CALL		test
+MOVE		GF@b		bool@true
+EQ		GF@eq	GF@a		GF@b
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@eq
+PUSHFRAME	
+CALL		test
+MOVE		GF@b		bool@false
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@false
+MOVE		TF@testB	GF@and
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@or
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	bool@true
+MOVE		TF@testB	GF@not
+PUSHFRAME	
+CALL		test
+WRITE	string@Loops\010
+WRITE	string@Zadej\032počet\032iterací:\032
+DEFVAR	GF@counter
+MOVE		GF@counter	int@0
+DEFVAR	GF@input
+READ		GF@input		int
+WRITE	GF@input
+WRITE	string@\010
+LABEL	while
+JUMPIFEQ	loop_end		GF@counter	GF@input
+ADD		GF@counter	GF@counter	int@1
+JUMP		while
+LABEL	loop_end
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA		GF@input
+MOVE		TF@testB		GF@counter
+PUSHFRAME	
+CALL		test
+WRITE	string@String,\032typy\010
+DEFVAR	GF@text
+DEFVAR	GF@char
+DEFVAR	GF@len
+DEFVAR	GF@strtype
+DEFVAR	GF@inttype
+DEFVAR	GF@uninit
+DEFVAR	GF@null
+DEFVAR	GF@uninittype
+MOVE		GF@null	nil@nil
+MOVE		GF@text	string@ahoj
+STRLEN	GF@len	GF@text
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	int@4
+MOVE		TF@testB	GF@len
+PUSHFRAME	
+CALL		test
+GETCHAR	GF@char	string@asdasd	int@2
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@d
+MOVE		TF@testB	GF@char
+PUSHFRAME	
+CALL		test
+SETCHAR	GF@text	int@1	string@a
+SETCHAR	GF@text	int@3	string@a
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@aaoa
+MOVE		TF@testB	GF@text
+PUSHFRAME	
+CALL		test
+TYPE		GF@strtype	GF@text
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@string
+MOVE		TF@testB	GF@strtype
+PUSHFRAME	
+CALL		test
+TYPE		GF@inttype	GF@len
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@int
+MOVE		TF@testB	GF@inttype
+PUSHFRAME	
+CALL		test
+TYPE		GF@uninittype	GF@uninit
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@None
+MOVE		TF@testB	GF@uninittype
+PUSHFRAME	
+CALL		test
+TYPE		GF@uninittype	GF@null
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@nil
+MOVE		TF@testB	GF@uninittype
+PUSHFRAME	
+CALL		test
+WRITE	string@Stack\010
+DEFVAR	GF@firstin
+MOVE		GF@firstin	string@first_in
+DEFVAR	GF@secondin
+MOVE		GF@secondin	string@second_in
+PUSHS	GF@firstin
+PUSHS	GF@secondin
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@second_in
+POPS		TF@testB
+PUSHFRAME	
+CALL		test
+CREATEFRAME	
+DEFVAR	TF@testA
+DEFVAR	TF@testB
+MOVE		TF@testA	string@first_in
+POPS		TF@testB
+PUSHFRAME	
+CALL		test
+JUMP		end
+LABEL	test
+WRITE	string@Test\032[
+WRITE	GF@testcount
+ADD		GF@testcount	GF@testcount	int@1
+WRITE	string@]\010\009Očekávaná\032hodnota:\032
+WRITE	LF@testA
+WRITE	string@\010\009Reálná\032hodnota:\032
+WRITE	LF@testB
+WRITE	string@\010
+JUMPIFEQ	ok	LF@testA	LF@testB
+WRITE	string@\009FAIL!\010
+JUMP		test_end
+LABEL	ok
+WRITE	string@\009OK!\010
+POPFRAME	
+RETURN	
+LABEL	test_end
+POPFRAME	
+RETURN	
+LABEL	end
