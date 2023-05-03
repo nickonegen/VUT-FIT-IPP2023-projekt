@@ -4,7 +4,7 @@
 
 🔒 **Aktívny súkromný repozitár — nezverejňovať!**
 
-Hodnotenie: ?? / 20
+Hodnotenie: 23 / 20
 
 Zadanie: [ZADANI.pdf](ZADANI.pdf), originál [MOODLE PDF](https://moodle.vut.cz/mod/folder/view.php?id=272411https://moodle.vut.cz/pluginfile.php/532505/mod_folder/content/0/ipp23spec.pdf)
 
@@ -14,14 +14,6 @@ Zadanie: [ZADANI.pdf](ZADANI.pdf), originál [MOODLE PDF](https://moodle.vut.cz/
 
 Hodnotenie: 9 / 8
 
-### TODO-List
-
-- [X] ⏰ 2023-02-08 **Zadanie**
-- [X] ⏰ 2023-02-13 **Registrácia na projekt**
-- [X] ⏰ 2023-02-14 **Fixácia zadania**
-- [X] ⏰ 2023-03-06 **Pokusné odovzdanie**
-- [X] ⏰ 2023-03-13 **Deadline**
-
 ### Môže sa hodiť
 
 - [Parser-Tests (Solrig)](https://cdn.discordapp.com/attachments/889798927736528937/1073543734874095646/IPP23_parser_tests.zip)
@@ -30,13 +22,7 @@ Hodnotenie: 9 / 8
 
 ## Časť 2 (`interpret.py`)
 
-Hodnotenie: ?? / 12<br>（?）
-
-- [X] ⏰ 2023-02-08 **Zadanie**
-- [X] ⏰ 2023-02-14 **Fixácia zadania**
-- [X] ⏰ 2023-02-20 **Registrácia na projekt**
-- [X] ⏰ 2023-04-11 **Pokusné odovzdanie**
-- [ ] ⏰ 2023-04-18 **Deadline**
+Hodnotenie: 14 / 12
 
 ### Môže sa hodiť
 
