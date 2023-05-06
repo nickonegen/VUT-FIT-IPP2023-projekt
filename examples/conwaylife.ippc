@@ -1,0 +1,266 @@
+.IPPcode23
+##
+#
+# Conway's Game of Life
+# @see: https://rosettacode.org/wiki/Conway%27s_Game_of_Life#AWK
+# @requires: STACK rozšírenie
+#
+##
+
+DEFVAR GF@c     # Počet generácií
+MOVE   GF@c     int@2
+
+DEFVAR GF@rand  # DNI!
+MOVE   GF@rand  int@69420
+
+CALL  main
+EXIT  int@0
+
+LABEL mods
+     # mods -- stack modulus
+     #   Vstup:
+     #       stack[0]: b (int)
+     #       stack[1]: a (int)
+     #   Výstup:
+     #       stack[0]: a%b (int)
+     CREATEFRAME
+     PUSHFRAME
+     DEFVAR     LF@a
+     DEFVAR     LF@b
+     POPS       LF@b
+     POPS       LF@a
+     # a - (a / b) * b
+     PUSHS      LF@a    # a
+     PUSHS      LF@a    # a   a
+     PUSHS      LF@b    # b   a   a
+     IDIVS              # a/b a
+     PUSHS      LF@b    # b   a/b a
+     MULS               # (a/b)*b a
+     SUBS               # a%b
+     POPFRAME
+RETURN
+
+LABEL rands
+     # rands -- stack pseudo-RNG
+     # @see: https://rosettacode.org/wiki/Random_number_generator_(included)#BSD_rand()
+     #   Vstup:
+     #       <none>
+     #   Výstup:
+     #       stack[0] - náhodné číslo (int)
+     CREATEFRAME
+     PUSHFRAME
+     # rand_n = (1103515245 * rand_{n-1} + 12345) % (2 ^ 35)
+     PUSHS      int@1103515245
+     PUSHS      GF@rand
+     MULS
+     PUSHS      int@12345
+     ADDS
+     PUSHS      int@4294967296
+     CALL       mods
+     POPS       GF@rand
+     PUSHS      GF@rand
+     POPFRAME
+RETURN
+
+LABEL main
+     CREATEFRAME
+     PUSHFRAME
+
+     # Volitelný vstup 1: Počet generácií
+     DEFVAR   LF@tr
+     READ     GF@c       int
+     TYPE     LF@tr      GF@c
+     JUMPIFEQ main%if1%F LF@tr    string@int
+     MOVE     GF@c       int@220
+     LABEL    main%if1%F
+
+     # Volitelný vstup 2: RNG seed
+     READ     GF@rand    int
+     TYPE     LF@tr      GF@rand
+     JUMPIFEQ main%if2%F LF@tr    string@int
+     MOVE     GF@rand    int@69420
+     LABEL    main%if2%F
+
+     # d=619; i=10000; 
+     DEFVAR   GF@d
+     MOVE     GF@d   int@619
+     DEFVAR   GF@i
+     MOVE     GF@i   int@10000
+
+     # while(i--) m[i]=0;
+     DEFVAR   GF@n
+     MOVE     GF@n   string@0
+     DEFVAR   GF@m
+     MOVE     GF@m   string@0
+     LABEL    main%lo1
+          PUSHS     GF@i
+          PUSHS     int@0
+          GTS
+          PUSHS     bool@false
+          JUMPIFEQS main%lo1%E
+          CONCAT    GF@m      GF@m    string@0
+          CONCAT    GF@n      GF@n    string@0
+          SUB       GF@i      GF@i    int@1
+          JUMP      main%lo1
+     LABEL    main%lo1%E
+
+     # while(d--) m[int(rand()*1000)]=1;
+     DEFVAR   LF@tmpr
+     LABEL    main%lo2
+          PUSHS     GF@d
+          PUSHS     int@0
+          GTS
+          PUSHS     bool@false
+          JUMPIFEQS main%lo2%E
+          CALL      rands
+          PUSHS     int@1000
+          CALL      mods
+          POPS      LF@tmpr
+          SETCHAR   GF@m      LF@tmpr  string@1
+          SUB       GF@d      GF@d     int@1
+          JUMP      main%lo2
+     LABEL    main%lo2%E
+
+     # while(c--)
+     LABEL    main%lo3
+          PUSHS     GF@c
+          PUSHS     int@0
+          GTS
+          PUSHS     bool@false
+          JUMPIFEQS main%lo3%E
+          CALL      generation
+          CALL      gprint
+          WRITE     string@\010
+          SUB       GF@c      GF@c     int@1
+          JUMP      main%lo3
+     LABEL    main%lo3%E
+     POPFRAME
+RETURN
+
+LABEL generation
+CREATEFRAME
+PUSHFRAME
+DEFVAR  LF@tmpm
+DEFVAR  LF@cnd1
+DEFVAR  LF@cnd2
+# for(i=52; i<=949; i++)
+MOVE    GF@i   int@52
+LABEL   gn%lo
+
+PUSHS     GF@i
+PUSHS     int@949
+GTS
+PUSHS     bool@true
+JUMPIFEQS gn%lo%E
+# d=m[i-1]+m[i+1]+m[i-51]+m[i-50]+m[i-49]+m[i+49]+m[i+50]+m[i+51];
+MOVE      GF@d    int@0
+SUB       LF@tmpm GF@i    int@1     # i-1
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+ADD       LF@tmpm GF@i    int@1     # i+1
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+SUB       LF@tmpm GF@i    int@51    # i-51
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+SUB       LF@tmpm GF@i    int@50    # i-50
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+SUB       LF@tmpm GF@i    int@49    # i-49
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+ADD       LF@tmpm GF@i    int@49    # i+49
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+ADD       LF@tmpm GF@i    int@50    # i+50
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+ADD       LF@tmpm GF@i    int@51    # i+51
+STRI2INT  LF@tmpm GF@m    LF@tmpm
+SUB       LF@tmpm LF@tmpm int@48
+ADD       GF@d    GF@d    LF@tmpm
+# n[i]=m[i];
+GETCHAR   LF@tmpm GF@m    GF@i
+SETCHAR   GF@n    GF@i    LF@tmpm
+# if(m[i]==0 && d==3) n[i]=1;
+EQ        LF@cnd1 LF@tmpm string@0
+EQ        LF@cnd2 GF@d    int@3
+AND       LF@cnd1 LF@cnd1 LF@cnd2
+JUMPIFEQ  gn%i%2  LF@cnd1 bool@false
+SETCHAR   GF@n    GF@i    string@1
+JUMP      gn%i%E
+# else if(m[i]==1 && d<2) n[i]=0;
+LABEL     gn%i%2
+EQ        LF@cnd1 LF@tmpm string@1
+LT        LF@cnd2 GF@d    int@2
+AND       LF@cnd1 LF@cnd1 LF@cnd2
+JUMPIFEQ  gn%i%3  LF@cnd1 bool@false
+SETCHAR   GF@n    GF@i    string@0
+JUMP      gn%i%E
+# else if(m[i]==1 && d>3) n[i]=0;
+LABEL     gn%i%3
+EQ        LF@cnd1 LF@tmpm string@1
+GT        LF@cnd2 GF@d    int@3
+AND       LF@cnd1 LF@cnd1 LF@cnd2
+JUMPIFEQ  gn%i%E  LF@cnd1 bool@false
+SETCHAR   GF@n    GF@i    string@0
+LABEL     gn%i%E
+
+ADD       GF@i    GF@i    int@1
+JUMP      gn%lo
+
+LABEL   gn%lo%E
+POPFRAME
+RETURN
+
+LABEL gprint
+     CREATEFRAME
+     PUSHFRAME
+     DEFVAR  LF@n_i
+     # for(i=1;i<=1000;i++)
+     MOVE    GF@i    int@1
+     LABEL   gp%lo
+          PUSHS     GF@i
+          PUSHS     int@1000
+          GTS
+          PUSHS     bool@true
+          JUMPIFEQS gp%lo%E
+          # if(n[i]) printf("O"); else printf(".");
+          STRI2INT  LF@n_i   GF@n    GF@i
+          SUB       LF@n_i   LF@n_i  int@48
+          PUSHS     LF@n_i
+          PUSHS     int@0
+          GTS
+          PUSHS     bool@false
+          JUMPIFEQS gp%if1%F
+          WRITE     string@O
+          JUMP      gp%if1%E
+          LABEL     gp%if1%F
+          WRITE     string@.
+          LABEL     gp%if1%E
+          # m[i]=n[i];
+          ADD       LF@n_i   LF@n_i  int@48
+          INT2CHAR  LF@n_i   LF@n_i
+          SETCHAR   GF@m     GF@i    LF@n_i
+          # if(!(i%50)) printf("\n");
+          PUSHS     GF@i
+          PUSHS     int@50
+          CALL      mods
+          PUSHS     int@0
+          GTS
+          PUSHS     bool@true
+          JUMPIFEQS gp%if2%F
+          WRITE     string@\010
+          LABEL     gp%if2%F
+          ADD       GF@i     GF@i    int@1
+          JUMP      gp%lo
+     LABEL   gp%lo%E
+     POPFRAME
+RETURN
