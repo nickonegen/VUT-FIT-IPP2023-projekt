@@ -1,0 +1,155 @@
+.IPPcode23
+##
+#
+# Mandelbrot demo
+# @requires: STACK a FLOAT rozšírenia
+# @see: https://rosettacode.org/wiki/Mandelbrot_set#AWK
+#
+##
+
+# XSize=59; YSize=21;
+# MinIm=-1.0; MaxIm=1.0; MinRe=-2.0; MaxRe=1.0;
+DEFVAR  GF@XSize
+MOVE    GF@XSize  int@59
+DEFVAR  GF@YSize
+MOVE    GF@YSize  int@21
+DEFVAR  GF@MinIm
+MOVE    GF@MinIm  int@-1
+DEFVAR  GF@MaxIm
+MOVE    GF@MaxIm  int@1
+DEFVAR  GF@MinRe
+MOVE    GF@MinRe  int@-2
+DEFVAR  GF@MaxRe
+MOVE    GF@MaxRe  int@1
+
+INT2FLOAT GF@MinIm GF@MinIm
+INT2FLOAT GF@MaxIm GF@MaxIm
+INT2FLOAT GF@MinRe GF@MinRe
+INT2FLOAT GF@MaxRe GF@MaxRe
+
+# StepX=(MaxRe-MinRe)/XSize; StepY=(MaxIm-MinIm)/YSize;
+DEFVAR GF@StepX
+PUSHS  GF@MaxRe
+PUSHS  GF@MinRe
+SUBS
+PUSHS  GF@XSize
+INT2FLOATS
+DIVS
+POPS   GF@StepX
+DEFVAR GF@StepY
+PUSHS  GF@MaxIm
+PUSHS  GF@MinIm
+SUBS
+PUSHS  GF@YSize
+INT2FLOATS
+DIVS
+POPS   GF@StepY
+
+# for(y=0; y<YSize; y++)
+DEFVAR   GF@cond_y
+DEFVAR   GF@y
+MOVE     GF@y       int@0
+LABEL    LOOP_Y
+     LT       GF@cond_y    GF@y    GF@YSize
+     JUMPIFEQ LOOP_Y%end   GF@cond_y bool@false
+     CREATEFRAME
+     PUSHFRAME
+     DEFVAR   LF@Im
+     DEFVAR   LF@Re
+     DEFVAR   LF@Zr
+     DEFVAR   LF@Zi
+     DEFVAR   LF@a
+     DEFVAR   LF@b
+     DEFVAR   LF@c
+     DEFVAR   LF@ch
+     DEFVAR   LF@x
+     DEFVAR   LF@n
+     DEFVAR   LF@cond_x
+     DEFVAR   LF@cond_n
+     DEFVAR   LF@cond_b
+
+     # Im = MinIm+StepY*y;
+     PUSHS    GF@StepY
+     PUSHS    GF@y
+     INT2FLOATS
+     MULS
+     PUSHS    GF@MinIm
+     ADDS
+     POPS     LF@Im
+
+     # for(x=0; x<XSize; x++)
+     MOVE     LF@x       int@0
+     LABEL    LOOP_X
+          LT       LF@cond_x  LF@x      GF@XSize
+          JUMPIFEQ LOOP_X%end LF@cond_x bool@false
+
+          # Re=MinRe+StepX*x; Zr=Re; Zi=Im;
+          PUSHS    GF@StepX
+          PUSHS    LF@x
+          INT2FLOATS
+          MULS
+          PUSHS    GF@MinRe
+          ADDS
+          POPS     LF@Re
+          MOVE     LF@Zr      LF@Re
+          MOVE     LF@Zi      LF@Im
+
+          # for(n=0; n<30; n++)
+          MOVE     LF@n       int@0
+          LABEL    LOOP_N
+               LT       LF@cond_n  LF@n      int@30
+               JUMPIFEQ LOOP_N%end LF@cond_n bool@false
+
+               # a=Zr*Zr; b=Zi*Zi;
+               MUL      LF@a       LF@Zr     LF@Zr
+               MUL      LF@b       LF@Zi     LF@Zi
+
+               # if(a+b>4.0) break;
+               PUSHS    LF@a
+               PUSHS    LF@b
+               ADDS
+               PUSHS    int@4
+               INT2FLOATS
+               GTS
+               POPS     LF@cond_b
+               JUMPIFEQ LOOP_N%end LF@cond_b bool@true
+
+               # Zi=2*Zr*Zi+Im;
+               PUSHS    int@2
+               INT2FLOATS
+               PUSHS    LF@Zr
+               PUSHS    LF@Zi
+               MULS
+               MULS
+               PUSHS    LF@Im
+               ADDS
+               POPS     LF@Zi
+
+               # Zr=a-b+Re;
+               PUSHS    LF@a
+               PUSHS    LF@b
+               SUBS
+               PUSHS    LF@Re
+               ADDS
+               POPS     LF@Zr
+
+               ADD      LF@n       LF@n      int@1
+               JUMP     LOOP_N
+          LABEL    LOOP_N%end
+
+          # printf "%c",62-n;
+          SUB      LF@c       int@62    LF@n
+          INT2CHAR LF@ch      LF@c
+          WRITE    LF@ch
+
+          ADD      LF@x       LF@x      int@1
+          JUMP     LOOP_X
+     LABEL    LOOP_X%end
+
+     # print "";
+     WRITE    string@\010
+
+     POPFRAME
+     ADD      GF@y       GF@y    int@1
+     JUMP     LOOP_Y
+LABEL    LOOP_Y%end
