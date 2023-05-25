@@ -5,7 +5,7 @@
 ⚠️ **Zverejnené pre archívne účely — nekopírujte, nula by Vás mrzela. Za nič také nenesiem žiadnu zodpovednosť!** Všetky odovzdané projekty prechádzajú kontrolou plagiátorstva, pri ktorej sa porovnávajú aj s dávnejšie odovzdanými riešeniami.
 
 <div align="center">
-    <img alt="demo" src="examples/demo.gif" width="100%">
+    <img alt="demo" src="examples/demo.gif" width="60%">
 </div>
 
 Hodnotenie: 23 / 20
