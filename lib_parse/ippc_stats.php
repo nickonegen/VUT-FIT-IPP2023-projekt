@@ -3,7 +3,7 @@
 /**
  * Pomocná knižnica pre získavanie štatistík
  * (rozšírenie STATP)
- * @author Onegen Something <xonege99@vutbr.cz>
+ * @author Onegen Something <xkrame00@vutbr.cz>
  */
 
 /** @var int FANCY_STAT_WIDTH Šírka textového "fancy" výstupu štatistík */
@@ -31,7 +31,7 @@ function ippcstat_collect(): string {
 	}
 
 	$stat_string = $fancy
-		? 'parse.php for IPPcode23 by xonege99  ' .
+		? 'parse.php for IPPcode23 by xkrame00  ' .
 			sprintf(
 				'T=%.2f ms ',
 				(microtime(true) - $GINFO['start']) * 1000,

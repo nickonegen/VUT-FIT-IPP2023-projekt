@@ -2,7 +2,7 @@
 
 /**
  * Pomocná knižnica pre lexikálnu analýzu IPPcode23
- * @author Onegen Something <xonege99@vutbr.cz>
+ * @author Onegen Something <xkrame00@vutbr.cz>
  */
 
 

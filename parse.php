@@ -5,7 +5,7 @@
  *
  * Lexikálny a syntaktický analyzátor, a prevodník
  * zdrojového kódu v IPPcode23 do XML reprezentácie.
- * @author Onegen Something <xonege99@vutbr.cz>
+ * @author Onegen Something <xkrame00@vutbr.cz>
  */
 
 ini_set('display_errors', 'stderr');
