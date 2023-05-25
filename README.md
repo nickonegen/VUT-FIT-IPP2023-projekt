@@ -2,7 +2,11 @@
 
 *Projekt (parser a interprét IPPcode23) z predmetu Princípy programovacích jazykov a objektovo-orientovaného programovania (IPP), štvrtý semester bakalárskeho štúdia BIT na FIT VUT/BUT, ak. rok 2022/2023*
 
-🔒 **Aktívny súkromný repozitár — nezverejňovať!**
+⚠️ **Zverejnené pre archívne účely — nekopírujte, nula by Vás mrzela. Za nič také nenesiem žiadnu zodpovednosť!** Všetky odovzdané projekty prechádzajú kontrolou plagiátorstva, pri ktorej sa porovnávajú aj s dávnejšie odovzdanými riešeniami.
+
+<div align="center">
+    <img alt="demo" src="examples/demo.gif" width="100%">
+</div>
 
 Hodnotenie: 23 / 20
 
