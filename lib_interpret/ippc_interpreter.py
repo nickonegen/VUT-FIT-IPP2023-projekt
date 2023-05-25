@@ -1,6 +1,6 @@
 """
 Implementácia triedy interprétu IPPcode23.
-@author: Onegen Something <xonege99@vutbr.cz>
+@author: Filip J. Kramec <xkrame00@vutbr.cz>
 """
 
 import sys

@@ -2,7 +2,7 @@
 IPP projekt 2023, časť 2
 
 Interprét XML reprezentácie programu v jazyku IPPcode23
-@author: Onegen Something <xonege99@vutbr.cz>
+@author: Filip J. Kramec <xkrame00@vutbr.cz>
 """
 
 import sys

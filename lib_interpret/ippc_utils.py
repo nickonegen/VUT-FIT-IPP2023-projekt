@@ -1,6 +1,6 @@
 """
 Pomocné triedy a konštanty pre interpret.py
-@author: Onegen Something <xonege99@vutbr.cz>
+@author: Filip J. Kramec <xkrame00@vutbr.cz>
 """
 
 import re
