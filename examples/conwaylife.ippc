@@ -2,16 +2,15 @@
 ##
 #
 # Conway's Game of Life
+# @param {int|null} počet generácií (default: 20)
+# @param {int|null} seed (default: 69420)
 # @see: https://rosettacode.org/wiki/Conway%27s_Game_of_Life#AWK
 # @requires: STACK rozšírenie
 #
 ##
 
-DEFVAR GF@c     # Počet generácií
-MOVE   GF@c     int@2
-
+DEFVAR GF@c
 DEFVAR GF@rand  # DNI!
-MOVE   GF@rand  int@69420
 
 CALL  main
 EXIT  int@0
@@ -138,86 +137,83 @@ LABEL main
 RETURN
 
 LABEL generation
-CREATEFRAME
-PUSHFRAME
-DEFVAR  LF@tmpm
-DEFVAR  LF@cnd1
-DEFVAR  LF@cnd2
-# for(i=52; i<=949; i++)
-MOVE    GF@i   int@52
-LABEL   gn%lo
-
-PUSHS     GF@i
-PUSHS     int@949
-GTS
-PUSHS     bool@true
-JUMPIFEQS gn%lo%E
-# d=m[i-1]+m[i+1]+m[i-51]+m[i-50]+m[i-49]+m[i+49]+m[i+50]+m[i+51];
-MOVE      GF@d    int@0
-SUB       LF@tmpm GF@i    int@1     # i-1
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-ADD       LF@tmpm GF@i    int@1     # i+1
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-SUB       LF@tmpm GF@i    int@51    # i-51
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-SUB       LF@tmpm GF@i    int@50    # i-50
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-SUB       LF@tmpm GF@i    int@49    # i-49
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-ADD       LF@tmpm GF@i    int@49    # i+49
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-ADD       LF@tmpm GF@i    int@50    # i+50
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-ADD       LF@tmpm GF@i    int@51    # i+51
-STRI2INT  LF@tmpm GF@m    LF@tmpm
-SUB       LF@tmpm LF@tmpm int@48
-ADD       GF@d    GF@d    LF@tmpm
-# n[i]=m[i];
-GETCHAR   LF@tmpm GF@m    GF@i
-SETCHAR   GF@n    GF@i    LF@tmpm
-# if(m[i]==0 && d==3) n[i]=1;
-EQ        LF@cnd1 LF@tmpm string@0
-EQ        LF@cnd2 GF@d    int@3
-AND       LF@cnd1 LF@cnd1 LF@cnd2
-JUMPIFEQ  gn%i%2  LF@cnd1 bool@false
-SETCHAR   GF@n    GF@i    string@1
-JUMP      gn%i%E
-# else if(m[i]==1 && d<2) n[i]=0;
-LABEL     gn%i%2
-EQ        LF@cnd1 LF@tmpm string@1
-LT        LF@cnd2 GF@d    int@2
-AND       LF@cnd1 LF@cnd1 LF@cnd2
-JUMPIFEQ  gn%i%3  LF@cnd1 bool@false
-SETCHAR   GF@n    GF@i    string@0
-JUMP      gn%i%E
-# else if(m[i]==1 && d>3) n[i]=0;
-LABEL     gn%i%3
-EQ        LF@cnd1 LF@tmpm string@1
-GT        LF@cnd2 GF@d    int@3
-AND       LF@cnd1 LF@cnd1 LF@cnd2
-JUMPIFEQ  gn%i%E  LF@cnd1 bool@false
-SETCHAR   GF@n    GF@i    string@0
-LABEL     gn%i%E
-
-ADD       GF@i    GF@i    int@1
-JUMP      gn%lo
-
-LABEL   gn%lo%E
-POPFRAME
+     CREATEFRAME
+     PUSHFRAME
+     DEFVAR  LF@tmpm
+     DEFVAR  LF@cnd1
+     DEFVAR  LF@cnd2
+     # for(i=52; i<=949; i++)
+     MOVE    GF@i   int@52
+     LABEL   gn%lo
+          PUSHS     GF@i
+          PUSHS     int@949
+          GTS
+          PUSHS     bool@true
+          JUMPIFEQS gn%lo%E
+          # d=m[i-1]+m[i+1]+m[i-51]+m[i-50]+m[i-49]+m[i+49]+m[i+50]+m[i+51];
+          MOVE      GF@d    int@0
+          SUB       LF@tmpm GF@i    int@1     # i-1
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          ADD       LF@tmpm GF@i    int@1     # i+1
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          SUB       LF@tmpm GF@i    int@51    # i-51
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          SUB       LF@tmpm GF@i    int@50    # i-50
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          SUB       LF@tmpm GF@i    int@49    # i-49
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          ADD       LF@tmpm GF@i    int@49    # i+49
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          ADD       LF@tmpm GF@i    int@50    # i+50
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          ADD       LF@tmpm GF@i    int@51    # i+51
+          STRI2INT  LF@tmpm GF@m    LF@tmpm
+          SUB       LF@tmpm LF@tmpm int@48
+          ADD       GF@d    GF@d    LF@tmpm
+          # n[i]=m[i];
+          GETCHAR   LF@tmpm GF@m    GF@i
+          SETCHAR   GF@n    GF@i    LF@tmpm
+          # if(m[i]==0 && d==3) n[i]=1;
+          EQ        LF@cnd1 LF@tmpm string@0
+          EQ        LF@cnd2 GF@d    int@3
+          AND       LF@cnd1 LF@cnd1 LF@cnd2
+          JUMPIFEQ  gn%i%2  LF@cnd1 bool@false
+          SETCHAR   GF@n    GF@i    string@1
+          JUMP      gn%i%E
+          # else if(m[i]==1 && d<2) n[i]=0;
+          LABEL     gn%i%2
+          EQ        LF@cnd1 LF@tmpm string@1
+          LT        LF@cnd2 GF@d    int@2
+          AND       LF@cnd1 LF@cnd1 LF@cnd2
+          JUMPIFEQ  gn%i%3  LF@cnd1 bool@false
+          SETCHAR   GF@n    GF@i    string@0
+          JUMP      gn%i%E
+          # else if(m[i]==1 && d>3) n[i]=0;
+          LABEL     gn%i%3
+          EQ        LF@cnd1 LF@tmpm string@1
+          GT        LF@cnd2 GF@d    int@3
+          AND       LF@cnd1 LF@cnd1 LF@cnd2
+          JUMPIFEQ  gn%i%E  LF@cnd1 bool@false
+          SETCHAR   GF@n    GF@i    string@0
+          LABEL     gn%i%E
+          ADD       GF@i    GF@i    int@1
+          JUMP      gn%lo
+     LABEL   gn%lo%E
+     POPFRAME
 RETURN
 
 LABEL gprint
