@@ -157,7 +157,14 @@ $XML = ippcXML_new_root();
 /* Spracovanie vstupu */
 for ($lineno = 0; ($line = fgets(STDIN)); $lineno++) {
 	$GINFO['lines'] = $lineno + 1;
-	ippc_parse_line($line);
+	// Spracovanie pseudo-inštrukcií nad rámec zadania.
+	// Toto nebolo odovzdané. Pre vanilla riešenie, proste
+	// odstránte všetko v tejto funkcií pod týmto komentárom
+	// okrem ippc_parse_line($line);
+	$proc_lines = ippc_check_pseudo($line);
+	foreach ($proc_lines as $line) {
+		ippc_parse_line($line);
+	}
 }
 
 $GINFO['header'] ||

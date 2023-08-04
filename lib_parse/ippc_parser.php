@@ -324,6 +324,35 @@ define('INSTR', [
 	],
 ]);
 
+// QoL pseudoinštrukcie, ktoré som si robil pre seba pri robení `examples`.
+/** @var \ArrayObject INSTR Výčet/objekt inštrukcií */
+define('PSEUDO', [
+	'LET' => fn (array $args): array => (count($args) != 2)
+		? throw_err('EANLYS', $GINFO['lines'], "LET expects 2 arguments, got " . count($args))
+		: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1]],
+	'ENTERFRAME' => fn (array $args): array => (count($args) != 0)
+		? throw_err('EANLYS', $GINFO['lines'], "ENTERFRAME expects 0 arguments, got " . count($args))
+		: ['CREATEFRAME', 'PUSHFRAME'],
+	'RETURNFRAME' => fn (array $args): array => (count($args) != 0)
+		? throw_err('EANLYS', $GINFO['lines'], "RETURNFRAME expects 0 arguments, got " . count($args))
+		: ['POPFRAME', 'RETURN'],
+	'NAND' => fn (array $args): array => (count($args) != 3)
+		? throw_err('EANLYS', $GINFO['lines'], "NAND expects 3 arguments, got " . count($args))
+		: ['AND ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]],
+	'NOR' => fn (array $args): array => (count($args) != 3)
+		? throw_err('EANLYS', $GINFO['lines'], "NOR expects 3 arguments, got " . count($args))
+		: ['OR ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]],
+	'INC' => fn (array $args): array => (count($args) != 2)
+		? throw_err('EANLYS', $GINFO['lines'], "INC expects 2 arguments, got " . count($args))
+		: ['MOVE ' . $args[0] . ' ' . $args[1], 'ADD ' . $args[0] . ' ' . $args[0] . ' int@1'],
+	'DEC' => fn (array $args): array => (count($args) != 2)
+		? throw_err('EANLYS', $GINFO['lines'], "DEC expects 2 arguments, got " . count($args))
+		: ['MOVE ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' int@1'],
+	'XCHG' => fn (array $args): array => (count($args) != 2)
+		? throw_err('EANLYS', $GINFO['lines'], "XCHG expects 2 arguments, got " . count($args))
+		: ['DEFVAR GF@%%tmp' . $GINFO['lines'], 'MOVE GF@%%tmp' . $GINFO['lines'] . ' ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'MOVE ' . $args[1] . ' GF@%%tmp' . $GINFO['lines']],
+]);
+
 
 /* Funkcie */
 
@@ -484,6 +513,25 @@ function ippc_parse_line(string $line): void {
 			ippcstat_reg_jump();
 			break;
 		default: // žiadna ďalšia štatistika
+	}
+}
+
+/**
+ * Predspracovanie riadku na kontrolu pseudo-inštrukcií.
+ * (Pridané po odovzdaní, nie je súčasť zadania!)
+ * 
+ * @param string $line Riadok na spracovanie
+ * 
+ * @return array Pole obsahujúce riadky na spracovanie
+ */
+function ippc_check_pseudo(string $line): array {
+	$parts = explode(' ', preg_replace('#\s+#', ' ', trim($line)));
+	$parts[0] = strtoupper($parts[0]);
+	if (array_key_exists($parts[0], PSEUDO)) {
+		$args = array_slice($parts, 1);
+		return PSEUDO[$parts[0]]($args);
+	} else {
+		return array($line);
 	}
 }
 
