@@ -1,5 +1,11 @@
 # IPP PROJEKT, FIT VUT 2023
 
+> Táto verzia obsahuje nejaké zmeny mimo zadanie, ako pseudoinštrukcie alebo
+> SYSCALL (vrátane `examples`). Pre pôvodnú, odovzdanú verziu @see
+> [`vanilla`](https://github.com/nickonegen/VUT-FIT-IPP2023-projekt/tree/vanilla)
+> vetvu alebo commit
+> [`071d4c1`](https://github.com/nickonegen/VUT-FIT-IPP2023-projekt/commit/071d4c1d35c979ba6fe78ff6b46b22d199e58773).
+
 *Projekt (parser a interprét IPPcode23) z predmetu Princípy programovacích jazykov a objektovo-orientovaného programovania (IPP), štvrtý semester bakalárskeho štúdia BIT na FIT VUT/BUT, ak. rok 2022/2023*
 
 ⚠️ **Zverejnené pre archívne účely — nekopírujte, nula by Vás mrzela. Za nič také nenesiem žiadnu zodpovednosť!** Všetky odovzdané projekty prechádzajú kontrolou plagiátorstva, pri ktorej sa porovnávajú aj s dávnejšie odovzdanými riešeniami.
