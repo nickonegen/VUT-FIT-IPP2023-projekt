@@ -429,17 +429,53 @@ define('PSEUDO', [
 			? throw_err('EANLYS', $GINFO['lines'], "ONE expects 1 argument, got " . count($args))
 			: ['MOVE ' . $args[0] . ' int@1'];
 	},
-	'JE' => function (array $args): array {
+	'JUMPIFGT' => function (array $args): array {
 		global $GINFO;
 		return (count($args) != 3)
-			? throw_err('EANLYS', $GINFO['lines'], "JE expects 3 arguments, got " . count($args))
-			: ['JUMPIFEQ ' . $args[0] . ' ' . $args[1] . ' ' . $args[2]];
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGTS expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'GTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
 	},
-	'JNE' => function (array $args): array {
+	'JUMPIFGTS' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGTS expects 1 argument, got " . count($args))
+			: ['GTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLT' => function (array $args): array {
 		global $GINFO;
 		return (count($args) != 3)
-			? throw_err('EANLYS', $GINFO['lines'], "JNE expects 3 arguments, got " . count($args))
-			: ['JUMPIFNEQ ' . $args[0] . ' ' . $args[1] . ' ' . $args[2]];
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLTS expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'LTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLTS' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLTS expects 1 argument, got " . count($args))
+			: ['LTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFGE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGES expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'LTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFGES' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGES expects 1 argument, got " . count($args))
+			: ['LTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLES expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'GTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLES' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLES expects 1 argument, got " . count($args))
+			: ['GTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
 	},
 ]);
 

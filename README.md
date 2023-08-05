@@ -1,6 +1,6 @@
 # IPP PROJEKT, FIT VUT 2023
 
-> Táto verzia obsahuje nejaké zmeny mimo zadanie, ako
+> ⚠️ Táto verzia obsahuje nejaké zmeny mimo zadanie, ako
 > [pseudoinštrukcie](https://github.com/nickonegen/VUT-FIT-IPP2023-projekt/pull/17)
 > ~~alebo SYSCALL~~.
 > Pre pôvodnú, odovzdanú verziu @see
