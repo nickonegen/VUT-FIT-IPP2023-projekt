@@ -362,7 +362,7 @@ define('PSEUDO', [
 		: ['ADD ' . $args[0] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[1] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' ' . $args[1]],
 	'XCHG' => fn (array $args): array => (count($args) != 2)
 		? throw_err('EANLYS', $GINFO['lines'], "XCHG expects 2 arguments, got " . count($args))
-		: ['DEFVAR GF@%%tmp' . $GINFO['lines'], 'MOVE GF@%%tmp' . $GINFO['lines'] . ' ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'MOVE ' . $args[1] . ' GF@%%tmp' . $GINFO['lines']],
+		: ['PUSHS ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'POPS ' . $args[1]],
 	'NEG' => fn (array $args): array => (count($args) != 2)
 		? throw_err('EANLYS', $GINFO['lines'], "NEG expects 2 arguments, got " . count($args))
 		: ['MOVE ' . $args[0] . ' ' . $args[1], 'MUL ' . $args[0] . ' ' . $args[0] . ' int@-1'],
