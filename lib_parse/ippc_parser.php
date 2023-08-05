@@ -369,6 +369,12 @@ define('PSEUDO', [
 			? throw_err('EANLYS', $GINFO['lines'], "NOR expects 3 arguments, got " . count($args))
 			: ['OR ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]];
 	},
+	'XOR' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "XOR expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'NOTS', 'ANDS', 'PUSHS ' . $args[2], 'PUSHS ' . $args[1], 'NOTS', 'ANDS', 'ORS', 'POPS ' . $args[0]];
+	},
 	'INC' => function (array $args): array {
 		global $GINFO;
 		return (count($args) != 2)
