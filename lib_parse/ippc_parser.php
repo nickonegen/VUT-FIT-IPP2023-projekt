@@ -324,6 +324,161 @@ define('INSTR', [
 	],
 ]);
 
+// QoL pseudoinštrukcie, ktoré som si robil pre seba pri robení `examples`.
+/** @var \ArrayObject INSTR Výčet/objekt inštrukcií */
+define('PSEUDO', [
+	'LET' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "LET expects 2 arguments, got " . count($args))
+			: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1]];
+	},
+	'LETS' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "LETS expects 1 argument, got " . count($args))
+			: ['DEFVAR ' . $args[0], 'POPS ' . $args[0]];
+	},
+	'LETF' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "LETF expects 2 argument, got " . count($args))
+			: ['DEFVAR ' . $args[0], 'INT2FLOAT ' . $args[0] . ' ' . $args[1]];
+	},
+	'ENTERFRAME' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 0)
+			? throw_err('EANLYS', $GINFO['lines'], "ENTERFRAME expects 0 arguments, got " . count($args))
+			: ['CREATEFRAME', 'PUSHFRAME'];
+	},
+	'LEAVEFRAME' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 0)
+			? throw_err('EANLYS', $GINFO['lines'], "RETURNFRAME expects 0 arguments, got " . count($args))
+			: ['POPFRAME', 'RETURN'];
+	},
+	'NAND' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "NAND expects 3 arguments, got " . count($args))
+			: ['AND ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]];
+	},
+	'NOR' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "NOR expects 3 arguments, got " . count($args))
+			: ['OR ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]];
+	},
+	'XOR' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "XOR expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'NOTS', 'ANDS', 'PUSHS ' . $args[2], 'PUSHS ' . $args[1], 'NOTS', 'ANDS', 'ORS', 'POPS ' . $args[0]];
+	},
+	'INC' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "INC expects 2 arguments, got " . count($args))
+			: ['ADD ' . $args[0] . ' ' . $args[1] . ' int@1'];
+	},
+	'DEC' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "DEC expects 2 arguments, got " . count($args))
+			: ['SUB ' . $args[0] . ' ' . $args[1] . ' int@1'];
+	},
+	'XCHGI' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "XCHGI expects 2 arguments, got " . count($args))
+			: ['ADD ' . $args[0] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[1] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' ' . $args[1]];
+	},
+	'XCHG' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "XCHG expects 2 arguments, got " . count($args))
+			: ['PUSHS ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'POPS ' . $args[1]];
+	},
+	'NEG' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "NEG expects 2 arguments, got " . count($args))
+			: ['MUL ' . $args[0] . ' ' . $args[1] . ' int@-1'];
+	},
+	'SHL' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "SHL expects 2 arguments, got " . count($args))
+			: array_fill(0, intval($args[1]), 'MUL ' . $args[0] . ' ' . $args[0] . ' int@2');
+	},
+	'SHR' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "SHR expects 2 arguments, got " . count($args))
+			: array_fill(0, intval($args[1]), 'IDIV ' . $args[0] . ' ' . $args[0] . ' int@2');
+	},
+	'ZERO' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "ZERO expects 1 argument, got " . count($args))
+			: ['MOVE ' . $args[0] . ' int@0'];
+	},
+	'ONE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "ONE expects 1 argument, got " . count($args))
+			: ['MOVE ' . $args[0] . ' int@1'];
+	},
+	'JUMPIFGT' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGTS expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'GTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFGTS' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGTS expects 1 argument, got " . count($args))
+			: ['GTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLT' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLTS expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'LTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLTS' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLTS expects 1 argument, got " . count($args))
+			: ['LTS', 'PUSHS bool@true', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFGE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGES expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'LTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFGES' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFGES expects 1 argument, got " . count($args))
+			: ['LTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLES expects 3 arguments, got " . count($args))
+			: ['PUSHS ' . $args[1], 'PUSHS ' . $args[2], 'GTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+	'JUMPIFLES' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "JUMPIFLES expects 1 argument, got " . count($args))
+			: ['GTS', 'PUSHS bool@false', 'JUMPIFEQS ' . $args[0]];
+	},
+]);
+
 
 /* Funkcie */
 
@@ -484,6 +639,25 @@ function ippc_parse_line(string $line): void {
 			ippcstat_reg_jump();
 			break;
 		default: // žiadna ďalšia štatistika
+	}
+}
+
+/**
+ * Predspracovanie riadku na kontrolu pseudo-inštrukcií.
+ * (Pridané po odovzdaní, nie je súčasť zadania!)
+ * 
+ * @param string $line Riadok na spracovanie
+ * 
+ * @return array Pole obsahujúce riadky na spracovanie
+ */
+function ippc_check_pseudo(string $line): array {
+	$parts = explode(' ', preg_replace('#\s+#', ' ', trim($line)));
+	$parts[0] = strtoupper($parts[0]);
+	if (array_key_exists($parts[0], PSEUDO)) {
+		$args = array_slice($parts, 1);
+		return PSEUDO[$parts[0]]($args);
+	} else {
+		return array($line);
 	}
 }
 
