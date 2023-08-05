@@ -330,10 +330,16 @@ define('PSEUDO', [
 	'LET' => fn (array $args): array => (count($args) != 2)
 		? throw_err('EANLYS', $GINFO['lines'], "LET expects 2 arguments, got " . count($args))
 		: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1]],
+	'LETS' => fn (array $args): array => (count($args) != 1)
+		? throw_err('EANLYS', $GINFO['lines'], "LETS expects 1 argument, got " . count($args))
+		: ['DEFVAR ' . $args[0], 'POPS ' . $args[0]],
+	'LETR' => fn (array $args): array => (count($args) != 2)
+		? throw_err('EANLYS', $GINFO['lines'], "LETR expects 2 arguments, got " . count($args))
+		: ['DEFVAR ' . $args[0], 'READ ' . $args[0] . ' ' . $args[1]],
 	'ENTERFRAME' => fn (array $args): array => (count($args) != 0)
 		? throw_err('EANLYS', $GINFO['lines'], "ENTERFRAME expects 0 arguments, got " . count($args))
 		: ['CREATEFRAME', 'PUSHFRAME'],
-	'RETURNFRAME' => fn (array $args): array => (count($args) != 0)
+	'LEAVEFRAME' => fn (array $args): array => (count($args) != 0)
 		? throw_err('EANLYS', $GINFO['lines'], "RETURNFRAME expects 0 arguments, got " . count($args))
 		: ['POPFRAME', 'RETURN'],
 	'NAND' => fn (array $args): array => (count($args) != 3)
