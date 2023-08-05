@@ -327,63 +327,114 @@ define('INSTR', [
 // QoL pseudoinštrukcie, ktoré som si robil pre seba pri robení `examples`.
 /** @var \ArrayObject INSTR Výčet/objekt inštrukcií */
 define('PSEUDO', [
-	'LET' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "LET expects 2 arguments, got " . count($args))
-		: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1]],
-	'LETS' => fn (array $args): array => (count($args) != 1)
-		? throw_err('EANLYS', $GINFO['lines'], "LETS expects 1 argument, got " . count($args))
-		: ['DEFVAR ' . $args[0], 'POPS ' . $args[0]],
-	'LETF' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "LETF expects 2 argument, got " . count($args))
-		: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'INT2FLOAT ' . $args[0] . ' ' . $args[0]],
-	'LETR' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "LETR expects 2 arguments, got " . count($args))
-		: ['DEFVAR ' . $args[0], 'READ ' . $args[0] . ' ' . $args[1]],
-	'ENTERFRAME' => fn (array $args): array => (count($args) != 0)
-		? throw_err('EANLYS', $GINFO['lines'], "ENTERFRAME expects 0 arguments, got " . count($args))
-		: ['CREATEFRAME', 'PUSHFRAME'],
-	'LEAVEFRAME' => fn (array $args): array => (count($args) != 0)
-		? throw_err('EANLYS', $GINFO['lines'], "RETURNFRAME expects 0 arguments, got " . count($args))
-		: ['POPFRAME', 'RETURN'],
-	'NAND' => fn (array $args): array => (count($args) != 3)
-		? throw_err('EANLYS', $GINFO['lines'], "NAND expects 3 arguments, got " . count($args))
-		: ['AND ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]],
-	'NOR' => fn (array $args): array => (count($args) != 3)
-		? throw_err('EANLYS', $GINFO['lines'], "NOR expects 3 arguments, got " . count($args))
-		: ['OR ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]],
-	'INC' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "INC expects 2 arguments, got " . count($args))
-		: ['MOVE ' . $args[0] . ' ' . $args[1], 'ADD ' . $args[0] . ' ' . $args[0] . ' int@1'],
-	'DEC' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "DEC expects 2 arguments, got " . count($args))
-		: ['MOVE ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' int@1'],
-	'XCHGI' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "XCHGI expects 2 arguments, got " . count($args))
-		: ['ADD ' . $args[0] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[1] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' ' . $args[1]],
-	'XCHG' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "XCHG expects 2 arguments, got " . count($args))
-		: ['PUSHS ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'POPS ' . $args[1]],
-	'NEG' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "NEG expects 2 arguments, got " . count($args))
-		: ['MOVE ' . $args[0] . ' ' . $args[1], 'MUL ' . $args[0] . ' ' . $args[0] . ' int@-1'],
-	'SHL' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "SHL expects 2 arguments, got " . count($args))
-		: array_fill(0, intval($args[1]), 'MUL ' . $args[0] . ' ' . $args[0] . ' int@2'),
-	'SHR' => fn (array $args): array => (count($args) != 2)
-		? throw_err('EANLYS', $GINFO['lines'], "SHR expects 2 arguments, got " . count($args))
-		: array_fill(0, intval($args[1]), 'IDIV ' . $args[0] . ' ' . $args[0] . ' int@2'),
-	'ZERO' => fn (array $args): array => (count($args) != 1)
-		? throw_err('EANLYS', $GINFO['lines'], "ZERO expects 1 argument, got " . count($args))
-		: ['MOVE ' . $args[0] . ' int@0'],
-	'ONE' => fn (array $args): array => (count($args) != 1)
-		? throw_err('EANLYS', $GINFO['lines'], "ONE expects 1 argument, got " . count($args))
-		: ['MOVE ' . $args[0] . ' int@1'],
-	'JE' => fn (array $args): array => (count($args) != 3)
-		? throw_err('EANLYS', $GINFO['lines'], "JE expects 3 arguments, got " . count($args))
-		: ['JUMPIFEQ ' . $args[0] . ' ' . $args[1] . ' ' . $args[2]],
-	'JNE' => fn (array $args): array => (count($args) != 3)
-		? throw_err('EANLYS', $GINFO['lines'], "JNE expects 3 arguments, got " . count($args))
-		: ['JUMPIFNEQ ' . $args[0] . ' ' . $args[1] . ' ' . $args[2]],
+	'LET' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "LET expects 2 arguments, got " . count($args))
+			: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1]];
+	},
+	'LETS' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "LETS expects 1 argument, got " . count($args))
+			: ['DEFVAR ' . $args[0], 'POPS ' . $args[0]];
+	},
+	'LETF' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "LETF expects 2 argument, got " . count($args))
+			: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'INT2FLOAT ' . $args[0] . ' ' . $args[0]];
+	},
+	'ENTERFRAME' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 0)
+			? throw_err('EANLYS', $GINFO['lines'], "ENTERFRAME expects 0 arguments, got " . count($args))
+			: ['CREATEFRAME', 'PUSHFRAME'];
+	},
+	'LEAVEFRAME' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 0)
+			? throw_err('EANLYS', $GINFO['lines'], "RETURNFRAME expects 0 arguments, got " . count($args))
+			: ['POPFRAME', 'RETURN'];
+	},
+	'NAND' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "NAND expects 3 arguments, got " . count($args))
+			: ['AND ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]];
+	},
+	'NOR' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "NOR expects 3 arguments, got " . count($args))
+			: ['OR ' . $args[0] . ' ' . $args[1] . ' ' . $args[2], 'NOT ' . $args[0] . ' ' . $args[0]];
+	},
+	'INC' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "INC expects 2 arguments, got " . count($args))
+			: ['MOVE ' . $args[0] . ' ' . $args[1], 'ADD ' . $args[0] . ' ' . $args[0] . ' int@1'];
+	},
+	'DEC' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "DEC expects 2 arguments, got " . count($args))
+			: ['MOVE ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' int@1'];
+	},
+	'XCHGI' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "XCHGI expects 2 arguments, got " . count($args))
+			: ['ADD ' . $args[0] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[1] . ' ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' ' . $args[1]];
+	},
+	'XCHG' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "XCHG expects 2 arguments, got " . count($args))
+			: ['PUSHS ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'POPS ' . $args[1]];
+	},
+	'NEG' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "NEG expects 2 arguments, got " . count($args))
+			: ['MOVE ' . $args[0] . ' ' . $args[1], 'MUL ' . $args[0] . ' ' . $args[0] . ' int@-1'];
+	},
+	'SHL' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "SHL expects 2 arguments, got " . count($args))
+			: array_fill(0, intval($args[1]), 'MUL ' . $args[0] . ' ' . $args[0] . ' int@2');
+	},
+	'SHR' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 2)
+			? throw_err('EANLYS', $GINFO['lines'], "SHR expects 2 arguments, got " . count($args))
+			: array_fill(0, intval($args[1]), 'IDIV ' . $args[0] . ' ' . $args[0] . ' int@2');
+	},
+	'ZERO' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "ZERO expects 1 argument, got " . count($args))
+			: ['MOVE ' . $args[0] . ' int@0'];
+	},
+	'ONE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 1)
+			? throw_err('EANLYS', $GINFO['lines'], "ONE expects 1 argument, got " . count($args))
+			: ['MOVE ' . $args[0] . ' int@1'];
+	},
+	'JE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JE expects 3 arguments, got " . count($args))
+			: ['JUMPIFEQ ' . $args[0] . ' ' . $args[1] . ' ' . $args[2]];
+	},
+	'JNE' => function (array $args): array {
+		global $GINFO;
+		return (count($args) != 3)
+			? throw_err('EANLYS', $GINFO['lines'], "JNE expects 3 arguments, got " . count($args))
+			: ['JUMPIFNEQ ' . $args[0] . ' ' . $args[1] . ' ' . $args[2]];
+	},
 ]);
 
 
