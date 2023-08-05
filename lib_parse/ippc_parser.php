@@ -343,7 +343,7 @@ define('PSEUDO', [
 		global $GINFO;
 		return (count($args) != 2)
 			? throw_err('EANLYS', $GINFO['lines'], "LETF expects 2 argument, got " . count($args))
-			: ['DEFVAR ' . $args[0], 'MOVE ' . $args[0] . ' ' . $args[1], 'INT2FLOAT ' . $args[0] . ' ' . $args[0]];
+			: ['DEFVAR ' . $args[0], 'INT2FLOAT ' . $args[0] . ' ' . $args[1]];
 	},
 	'ENTERFRAME' => function (array $args): array {
 		global $GINFO;
@@ -373,13 +373,13 @@ define('PSEUDO', [
 		global $GINFO;
 		return (count($args) != 2)
 			? throw_err('EANLYS', $GINFO['lines'], "INC expects 2 arguments, got " . count($args))
-			: ['MOVE ' . $args[0] . ' ' . $args[1], 'ADD ' . $args[0] . ' ' . $args[0] . ' int@1'];
+			: ['ADD ' . $args[0] . ' ' . $args[1] . ' int@1'];
 	},
 	'DEC' => function (array $args): array {
 		global $GINFO;
 		return (count($args) != 2)
 			? throw_err('EANLYS', $GINFO['lines'], "DEC expects 2 arguments, got " . count($args))
-			: ['MOVE ' . $args[0] . ' ' . $args[1], 'SUB ' . $args[0] . ' ' . $args[0] . ' int@1'];
+			: ['SUB ' . $args[0] . ' ' . $args[1] . ' int@1'];
 	},
 	'XCHGI' => function (array $args): array {
 		global $GINFO;
@@ -397,7 +397,7 @@ define('PSEUDO', [
 		global $GINFO;
 		return (count($args) != 2)
 			? throw_err('EANLYS', $GINFO['lines'], "NEG expects 2 arguments, got " . count($args))
-			: ['MOVE ' . $args[0] . ' ' . $args[1], 'MUL ' . $args[0] . ' ' . $args[0] . ' int@-1'];
+			: ['MUL ' . $args[0] . ' ' . $args[1] . ' int@-1'];
 	},
 	'SHL' => function (array $args): array {
 		global $GINFO;

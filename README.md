@@ -1,7 +1,9 @@
 # IPP PROJEKT, FIT VUT 2023
 
-> Táto verzia obsahuje nejaké zmeny mimo zadanie, ako pseudoinštrukcie alebo
-> SYSCALL. Pre pôvodnú, odovzdanú verziu @see
+> Táto verzia obsahuje nejaké zmeny mimo zadanie, ako
+> [pseudoinštrukcie](https://github.com/nickonegen/VUT-FIT-IPP2023-projekt/pull/17)
+> ~~alebo SYSCALL~~.
+> Pre pôvodnú, odovzdanú verziu @see
 > [`vanilla`](https://github.com/nickonegen/VUT-FIT-IPP2023-projekt/tree/vanilla)
 > vetvu alebo commit
 > [`071d4c1`](https://github.com/nickonegen/VUT-FIT-IPP2023-projekt/commit/071d4c1d35c979ba6fe78ff6b46b22d199e58773).
